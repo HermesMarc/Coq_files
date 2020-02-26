@@ -1,6 +1,6 @@
-# Coq; Graph Theory
+# Coq; Group Theory
 
-In this project I try to prove any things in graph theory that come to my mind.
+In this project I try to prove any things in group theory that come to my mind.
 Current goals are the general associativity rule and the first isomorphism theorem.
 
 To solve the former problem, I first focused on an analogue situation for binary trees and
