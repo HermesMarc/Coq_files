@@ -1,1 +1,1 @@
-Some Coq files I am working on.
+Some small projects in Coq I have finished or am still working on.
