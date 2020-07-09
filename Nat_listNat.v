@@ -36,7 +36,7 @@ Section Bijection.
                              | x::l => S (code (x, g l))
                              end.
 
-  (* We first show that g is injective and surjective and then use these results to define and verify its inverse function. *)
+  (* We first show that g is injective + surjective and then use these results to define and verify its inverse function. *)
 
   Lemma code_inj : injective code.
   Proof.
