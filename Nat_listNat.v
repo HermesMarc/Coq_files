@@ -43,25 +43,14 @@ Section Bijection.
     intros ? ? ?; rewrite <-decode_code; congruence.
   Defined.
     
-  
   Fact inj_g : injective g.
-  Proof.
-    intros A; induction A; intros [];
-      try intuition discriminate.
-    (* welcome to proof-golf *)
-    now intros [=[= <- <-%IHA ]%code_inj].
-  Defined.
-
-
-  (* ok, a more informative proof of the above is:*)
-  Goal injective g.
   Proof.
     intros A; induction A.
     - intros []. tauto. discriminate.
     - intros [| b B]. discriminate.
       cbn. intros [=H%code_inj]. injection H.
       intros ?%IHA. congruence.
-  Qed.
+  Defined.
   
 
   Hypothesis bound : forall x1 x2 n, code (x1, x2) = n -> x2 < S n.
