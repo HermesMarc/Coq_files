@@ -45,7 +45,7 @@ Section Bijection.
   
 
   Hypothesis bound : forall x1 x2 n, code (x1, x2) = n -> x2 < S n.
-  (* The above hypothesis is easily shown for the Cantor-pairing *)
+  (* The above hypothesis is easily shown for the Cantor pairing *)
 
   Lemma surj_g : forall N, { L & g L = N }.
   Proof.
