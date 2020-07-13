@@ -1,5 +1,17 @@
 Require Import Lia Lists.List.
 
+
+Definition injective {X Y} (f : X -> Y) :=
+  forall x x', f x = f x' -> x = x'.
+
+Definition inv {X Y} (g : Y -> X) (f : X -> Y) :=
+  forall x, g (f x) = x.
+
+Definition bijection X Y :=
+  { f : X -> Y & { g & inv g f /\ inv f g }}.
+
+
+
 Section Bijection.
 
   Variable code : nat * nat -> nat.
@@ -7,27 +19,6 @@ Section Bijection.
 
   Hypothesis decode_code : forall x, decode (code x) = x.
   Hypothesis code_decode : forall x, code (decode x) = x.
-
-
-  Definition injective {X Y} (f : X -> Y) :=
-    forall x x', f x = f x' -> x = x'.
-  
-  Definition inv {X Y} (g : Y -> X) (f : X -> Y) :=
-    forall x, g (f x) = x.
-
-  Definition bijection X Y :=
-    { f : X -> Y & { g & inv g f /\ inv f g }}.
-
-
-  Lemma complete_ind (f : nat -> Type) :
-    (forall x, (forall y, y < x -> f y) -> f x) -> forall x, f x.
-  Proof.
-    intros H x. apply H.
-    induction x.
-    - intros y. now intros ? % PeanoNat.Nat.nlt_0_r. 
-    - intros. apply H.
-      intros. apply IHx. lia.
-  Defined.
 
   
   (* This codes lists to numbers. We will show that it is a bijection. *)
@@ -56,16 +47,17 @@ Section Bijection.
   Hypothesis bound : forall x1 x2 n, code (x1, x2) = n -> x2 < S n.
   (* The above hypothesis is easily shown for the Cantor-pairing *)
 
-  Lemma surj_g : forall n, { L & g L = n }.
+  Lemma surj_g : forall N, { L & g L = N }.
   Proof.
-    apply complete_ind; intros [] IH.
+    apply (well_founded_induction_type Wf_nat.lt_wf); intros [|N] IH.
     - exists nil. reflexivity.
-    - rewrite <- (code_decode n).
-      destruct (decode n) as [x1 x2] eqn:H.
-      destruct (IH x2) as [l <-].
-      apply (bound x1); congruence.
-      exists (x1::l); reflexivity.
+    - rewrite <- (code_decode N).
+      destruct (decode N) as [x n] eqn:H.
+      destruct (IH n) as [l <-].
+      apply (bound x); congruence.
+      exists (x::l); reflexivity.
   Defined.
+
 
   (* Now we can define the inverse for g *)
   Definition f n := projT1 (surj_g n).  
