@@ -4,7 +4,11 @@ Require Import Arith.
 
 (** Formalized Solution for the following riddle *)
 
-(* You’re facing your friend, Caryn, in a “candy-off,” which works as follows: There’s a pile of 100 caramels and one peppermint patty. You and Caryn will go back and forth taking at least one and no more than five caramels from the candy pile in each turn. The person who removes the last caramel will also get the peppermint patty. And you love peppermint patties.
+(* You’re facing your friend, Caryn, in a “candy-off,” which works as follows: 
+   There’s a pile of 100 caramels and one peppermint patty. You and Caryn will 
+   go back and forth taking at least one and no more than five caramels from the 
+   candy pile in each turn. The person who removes the last caramel will also get 
+   the peppermint patty. And you love peppermint patties.
 
 Suppose Caryn lets you decide who goes first. Who should you choose in order to make sure you win the peppermint patty?
 
@@ -56,7 +60,6 @@ Proof.
 Qed.
 
 
-
 Lemma Fac_b_is_O y a1 a2 b :
     a1*y = a2*y + b -> b < 1*y -> b = 0.
 Proof.
@@ -84,14 +87,12 @@ Proof.
 Qed.
 
 
-
 Lemma Fac_eq y a b : b < y ->
   M y (a*y + b) = b  /\  (0 < y -> D y (a*y + b) = a ).
 Proof.
   intros. destruct y. lia.
   apply Fac_unique. apply M_bound. all: try lia. now rewrite <- Factor.
 Qed.  
-
 
 
 Lemma M_for_multiple : forall y x, M y x = 0 <-> exists k, x = k*y.
@@ -101,8 +102,6 @@ Proof.
   - intros [k ->]. destruct y. cbn. lia.
     assert (0 < S y) as [H ?]%(Fac_eq _ k) by lia. now rewrite <- plus_n_O in H. 
 Qed.
-
-
 
 
 Lemma non_div y x z : 0 < x -> M y x = 0 -> 0 < z < y -> M y (x - z) <> 0.
@@ -147,7 +146,7 @@ Section Riddle.
   Variable CarynChoice : choice.
 
 
-  (* This calculates the winner of the game given the choices c m, the starting height N of the stack and starting player p *)
+  (* This calculates the winner of the game given the choices c, m, the starting height N of the stack and starting player p *)
   Equations Game (N : nat) (p : player) (c m : choice) : player by wf N :=
     Game O p c m := switch p;
     Game N Caryn c m := Game (N - (proj1_sig c) N) Me c m;
@@ -162,7 +161,7 @@ Section Riddle.
   Defined.
   
   
-  (* This specifies my choice on every turn: I will always take a number of patties such that the height becomes divisible my 6 again. *)
+  (* This specifies my choice on every turn: I will always take a number of patties such that the height becomes divisible by 6 again. *)
   Lemma MyChoice : choice.
   Proof.
     exists (fun k => if nat_eqdec (M 6 k) O then 1 else M 6 k).
@@ -212,7 +211,6 @@ Section Riddle.
     destruct (nat_eqdec (M 6 N) O);
     (exists Caryn + exists Me); now apply WinChoice.
   Qed.
-  
   
   
 End Riddle.
