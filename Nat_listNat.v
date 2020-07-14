@@ -28,7 +28,7 @@ Section Bijection.
 
   (* We first show that g is injective + surjective and then use these results to define and verify its inverse function. *)
 
-  Lemma code_inj : injective code.
+  Lemma inj_code : injective code.
   Proof.
     intros ? ? ?; rewrite <-decode_code; congruence.
   Defined.
@@ -38,7 +38,7 @@ Section Bijection.
     intros A; induction A.
     - intros []. tauto. discriminate.
     - intros [| b B]. discriminate.
-      cbn. intros [=H%code_inj]. injection H.
+      cbn. intros [=H%inj_code]. injection H.
       intros ?%IHA. congruence.
   Defined.
   
