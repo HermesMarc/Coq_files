@@ -1,4 +1,4 @@
-Require Import Lia Lists.List.
+Require Import Lists.List.
 
 
 Definition injective {X Y} (f : X -> Y) :=
