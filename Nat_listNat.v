@@ -11,7 +11,6 @@ Definition bijection X Y :=
   { f : X -> Y & { g & inv g f /\ inv f g }}.
 
 
-
 Section Bijection.
 
   Variable code : nat * nat -> nat.
@@ -58,26 +57,24 @@ Section Bijection.
       exists (x::l); reflexivity.
   Defined.
 
-
   (* Now we can define the inverse for g *)
   Definition f n := projT1 (surj_g n).  
+
 
   Fact inv_gf : inv g f.
   Proof.
     intros ?. apply (projT2 (surj_g _)).
   Defined.
 
-
   Fact inv_fg : inv f g.
   Proof.
     intros ?. apply inj_g. now rewrite inv_gf.
   Defined.
-
+  
   
   Corollary Bij_Nat_listNat : bijection nat (list nat).
   Proof.
     exists f, g. split. apply inv_gf. apply inv_fg.
   Defined.
-  
   
 End Bijection.
