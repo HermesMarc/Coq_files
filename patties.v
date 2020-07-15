@@ -4,11 +4,7 @@ Require Import Arith.
 
 (** Formalized Solution for the following riddle *)
 
-(* You’re facing your friend, Caryn, in a “candy-off,” which works as follows: 
-   There’s a pile of 100 caramels and one peppermint patty. You and Caryn will 
-   go back and forth taking at least one and no more than five caramels from the 
-   candy pile in each turn. The person who removes the last caramel will also get 
-   the peppermint patty. And you love peppermint patties.
+(* You’re facing your friend, Caryn, in a “candy-off,” which works as follows: There’s a pile of 100 caramels and one peppermint patty. You and Caryn will go back and forth taking at least one and no more than five caramels from the candy pile in each turn. The person who removes the last caramel will also get the peppermint patty. And you love peppermint patties.
 
 Suppose Caryn lets you decide who goes first. Who should you choose in order to make sure you win the peppermint patty?
 
@@ -18,17 +14,21 @@ Suppose Caryn lets you decide who goes first. Who should you choose in order to 
 (*** Preliminaries *)
 (*We need some facts about division with remainder *)
 
+Definition iffT (X Y : Type) : Type := (X -> Y) * (Y -> X).
+Notation "X <=> Y" := (iffT X Y) (at level 95, no associativity).
+
+
 Definition DIV y x :
   sigT(fun a => sigT (fun b => x = a * y + b /\ (0 < y -> b < y)  )).
 Proof.
   destruct y as [|y].
-  exists 0, x. split. reflexivity. lia.
+  exists 0, x. repeat split. lia.
   induction x as [|x IH].
-  - exists 0, 0. split. now cbn. lia.
+  - exists 0, 0. repeat split. tauto.
   - destruct IH as (a&b&H).
     destruct (Nat.eq_dec b y).
-    + exists (S a), 0. lia.
-    + exists a, (S b). lia.
+    + exists (S a), 0. repeat split; lia.
+    + exists a, (S b). repeat split; lia.
 Defined.
 
 
@@ -43,64 +43,63 @@ Proof.
   apply (projT2 (projT2 (DIV _ _))).
 Qed.
 
-
 Fact M_bound y x : 0 < y -> M y x < y.
 Proof.
   apply (projT2 (projT2 (DIV _ _))).
 Qed.
 
 
-Lemma Fac_is_O y a b :
-    a*y + b = 0 <-> b = 0 /\ (0 < y -> a = 0).
-Proof.
-  split.
-  - intros [H ->]%plus_is_O. split; try reflexivity.
-    intros. apply (Nat.eq_mul_0_l _ y); lia.
-  - intros [-> Ha]. rewrite <- plus_n_O. destruct y; lia.
-Qed.
+Section Uniquness.
+
+  Variables y : nat.
+  
+
+  Lemma both_are_O a b :
+    a*y = b -> b < y -> a = 0 /\ b = 0.
+  Proof.
+    intros E. assert (y = 1*y) as -> by lia.
+    rewrite <-E. intros ?%Nat.mul_lt_mono_pos_r.
+    split. all: nia.
+  Qed.
 
 
-Lemma Fac_b_is_O y a1 a2 b :
-    a1*y = a2*y + b -> b < 1*y -> b = 0.
-Proof.
-  destruct y. cbn. lia.
-  intros H. enough (a1 * S y - a2 * S y = b ) as <-.
-  rewrite <- Nat.mul_sub_distr_r. intros Hb.
-  destruct (le_ge_dec a2 a1). apply (Nat.mul_lt_mono_pos_r) in Hb.
-  all : lia.
-Qed.
+  Lemma Fac_unique a1 b1 a2 b2 : b1 < y -> b2 < y ->
+            a1*y + b1 = a2*y + b2 -> a1 = a2 /\ b1 = b2.
+  Proof.
+    intros. destruct (le_ge_dec a1 a2).
+    1 : cut (a2 * y - a1 * y = b1 - b2).
+    3 : cut (a1 * y - a2 * y = b2 - b1).
+    all : try (rewrite <- Nat.mul_sub_distr_r; intros ?%both_are_O); lia.
+  Qed.
 
 
-Lemma Fac_unique y a1 b1 a2 b2 : b1 < y -> b2 < y ->
-    a1*y + b1 = a2*y + b2 <-> b1 = b2 /\ (0 < y -> a1 = a2).
-Proof.
-  destruct y. lia.
-  intros Hb1 Hb2.  split.
-  - destruct (le_ge_dec b1 b2).
-    + intros E. enough (a1 * S y = a2 * S y + (b2 - b1) ) as H%Fac_b_is_O.
-      assert (b1 = b2) as <- by lia. split. reflexivity. intros.
-      apply (Nat.mul_cancel_r _ _ (S y)) . all : lia.
-    + intros E. enough (a2 * S y = a1 * S y + (b1 - b2) ) as H%Fac_b_is_O.
-      assert (b1 = b2) as <- by lia. split. reflexivity. intros.
-      apply (Nat.mul_cancel_r _ _ (S y)) . all : lia. 
-  - intros []. lia.
-Qed.
+  Theorem unique x a b : b < y ->
+    x = a*y + b <-> a = D y x /\ b = M y x.
+  Proof.
+    split.
+    - rewrite (Factor y x) at 1. intros.
+      specialize (M_bound y x) as ?.
+      apply Fac_unique; lia.
+    - intros [-> ->]. apply Factor.
+  Qed.
+
+  
+  Corollary Fac_eq a b : b < y ->
+      a = D y (a*y + b) /\ b = M y (a*y + b).
+  Proof.
+    intros. now apply (unique _).
+  Qed.  
 
 
-Lemma Fac_eq y a b : b < y ->
-  M y (a*y + b) = b  /\  (0 < y -> D y (a*y + b) = a ).
-Proof.
-  intros. destruct y. lia.
-  apply Fac_unique. apply M_bound. all: try lia. now rewrite <- Factor.
-Qed.  
+End Uniquness.
 
 
-Lemma M_for_multiple : forall y x, M y x = 0 <-> exists k, x = k*y.
+Lemma M_for_multiple : forall y x, M y x = 0 <=> { k & x = k*y }.
 Proof.
   split.
   - intros H. exists (D y x). rewrite plus_n_O. rewrite <- H. apply Factor.
   - intros [k ->]. destruct y. cbn. lia.
-    assert (0 < S y) as [H ?]%(Fac_eq _ k) by lia. now rewrite <- plus_n_O in H. 
+    assert (0 < S y) as [? H]%(Fac_eq _ k) by lia. now rewrite <- plus_n_O in H. 
 Qed.
 
 
@@ -108,11 +107,9 @@ Lemma non_div y x z : 0 < x -> M y x = 0 -> 0 < z < y -> M y (x - z) <> 0.
 Proof.
   intros Hx [k ->]%M_for_multiple Hz [l Hl]%M_for_multiple. 
   apply Nat.lt_0_mul' in Hx. destruct Hx.
-  enough (k * y = l * y + z) as G%Fac_b_is_O; destruct k; lia.
+  enough (k * y + 0 = l * y + z) as G%Fac_unique; destruct k; lia.
 Qed.
   
-
-
 
 Lemma complete_ind (P : nat -> Type) :
   (forall x, (forall y, y < x -> P y) -> P x) -> forall x, P x.
@@ -146,7 +143,7 @@ Section Riddle.
   Variable CarynChoice : choice.
 
 
-  (* This calculates the winner of the game given the choices c, m, the starting height N of the stack and starting player p *)
+  (* This calculates the winner of the game given the choices c m, the starting height N of the stack and starting player p *)
   Equations Game (N : nat) (p : player) (c m : choice) : player by wf N :=
     Game O p c m := switch p;
     Game N Caryn c m := Game (N - (proj1_sig c) N) Me c m;
@@ -161,7 +158,7 @@ Section Riddle.
   Defined.
   
   
-  (* This specifies my choice on every turn: I will always take a number of patties such that the height becomes divisible by 6 again. *)
+  (* This specifies my choice on every turn: I will always take a number of patties such that the height becomes divisible my 6 again. *)
   Lemma MyChoice : choice.
   Proof.
     exists (fun k => if nat_eqdec (M 6 k) O then 1 else M 6 k).
@@ -200,7 +197,7 @@ Section Riddle.
         fold myChoice. rewrite (MyChoiceSpec _ H).
         rewrite (Factor 6 (S n) ) at 1. rewrite Nat.add_sub. apply IH.
         rewrite (Factor 6 (S n) ) at 2. lia.
-        rewrite (plus_n_O (_*_) ). apply Fac_eq. lia.
+        rewrite (plus_n_O (_*_) ). symmetry. apply Fac_eq; lia.
   Qed.
 
   
