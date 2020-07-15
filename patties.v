@@ -49,7 +49,7 @@ Proof.
 Qed.
 
 
-Section Uniquness.
+Section Uniqueness.
 
   Variables y : nat.
   
@@ -91,7 +91,7 @@ Section Uniquness.
   Qed.  
 
 
-End Uniquness.
+End Uniqueness.
 
 
 Lemma M_for_multiple : forall y x, M y x = 0 <=> { k & x = k*y }.
