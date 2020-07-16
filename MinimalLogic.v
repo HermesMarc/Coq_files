@@ -1,36 +1,52 @@
 (* Minimal Logic *)
 
+Definition iffT (X Y : Type) : Type := (X -> Y) * (Y -> X).
+Notation "X <=> Y" := (iffT X Y) (at level 95, no associativity).
+
+
 Section Minimal.
 
-  (* We try to work in a logic without False and use this varible in place of False *)
-  Variable C : Prop.
-  
-  Definition LEM : Prop := forall X : Prop , or (X -> C) X.
-  Definition DN : Prop := forall X : Prop, ((X -> C) -> C) -> X.
-  Definition CP : Prop := forall X Y : Prop, ((Y -> C) -> (X -> C)) -> X -> Y.
+  (* We try to work in a logic without False and use the variable F in its place *)
+  Variable F : Type.
 
-  Definition Peirce : Prop := forall X Y : Prop, ((X -> Y) -> X) -> X.
+  Definition Contradiction := forall A B, (A -> F) -> A -> B.
+  Definition Explosion := forall A, F -> A. 
+  Definition LEM := forall A, A + (A -> F).
+  Definition DN := forall A, ((A -> F) -> F) -> A.
+  Definition CP := forall A B, ((B -> F) -> (A -> F)) -> A -> B.
 
-  Lemma TN : forall X, (((X -> C) -> C) -> C) <-> (X -> C).
+  Definition Peirce := forall A B, ((A -> B) -> A) -> A.
+
+
+  Goal Contradiction <=> Explosion.
   Proof.
     split.
-    - intros nnnX x. apply nnnX. intros nX. apply nX. exact x.
-    - intros nX nnX. apply nnX. exact nX.
+    - intros con A. apply con. auto.
+    - intros expl. intros A B H a. apply expl. auto.
   Qed.
+  
 
-  Lemma DN_LEM : DN -> LEM.
+  Goal DN -> Explosion.
   Proof.
-    - intros dn X. apply dn. intro H. apply H. left. intro x. 
-      apply H. right; trivial.
+    intros dn A f. apply dn. intros H. exact f.
   Qed.
 
-  Lemma DN_CP : DN <-> CP.
+
+  Goal LEM * Explosion -> DN.
+  Proof.
+    intros [lem exp] X nnX. destruct (lem X) as [x | H]. exact x.
+    apply exp. apply nnX. exact H.
+  Qed.
+
+  
+  Lemma DN_CP : DN <=> CP.
   Proof.
     split.
     - intros dn X Y cp x. apply dn. intro nY. apply cp. exact nY. exact x.
     - intros cp X. apply cp. intros nX nnX. apply nnX. exact nX. 
   Qed.
 
+  
   Lemma CP_Peirce : CP -> Peirce.
   Proof.
     intros cp X Y. apply cp. intros notX H. apply notX, H. apply cp.
@@ -40,56 +56,24 @@ Section Minimal.
 
   Lemma Peirce_LEM : Peirce -> LEM.
   Proof.
-    intros peirce X. apply (peirce _ C). intro H. left. intro x. 
-    apply H. right. exact x.
+    intros peirce X. apply (peirce _ F). intro H. right. intros x. apply H.
+    left. exact x. 
   Qed.
 
-
-  Lemma DN_Peirce : DN -> Peirce.
-  Proof.
-    intros dn X Y. intros G. apply dn. intros nX. apply nX, G. intros x.
-    apply dn. intros nY. apply nX. exact x.
-  Qed.
-
-
-  Lemma CP_LEM : CP -> LEM.
-  Proof.
-    intros cp X. apply (cp True _ ). intros H.
-    assert (C -> (True -> C) ) as HC.
-    {intros c I. exact c. }
-    apply HC. apply H. left. intro x. apply H; tauto. exact I.
-  Qed.
 
 End Minimal.
 
 
 (* The above statements are equivalent in intuitionistic logic, 
-when we take C = False. We only show the missing implications. *)
+when we take F = False. We now show the missing equivalences. *)
 
 
-Definition LEM' : Prop := LEM False.
-
-Definition DN' : Prop := DN False.
-
-Definition CP' : Prop := CP False.
+Definition LEM' := LEM False.
+Definition DN' := DN False.
+Definition CP' := CP False.
 
 
-Lemma TN' : forall X:Prop, ~ ~ ~X <-> ~X.
-Proof.
-  split.
-  - intros nnnX x. apply nnnX. intros nX. apply nX. exact x.
-  - intros nX nnX. apply nnX. exact nX.
-Qed.
-
-
-Goal LEM' -> DN'.
-Proof.
-  intros lem X nnX. destruct (lem X) as [nX | x].
-  contradiction (nnX nX). exact x.
-Qed.
-
-
-Goal Peirce <-> CP'.
+Goal Peirce <=> CP'.
 Proof.
   split.
   - intros peirce X Y H x. apply (peirce _ False). intro nY. exfalso. 
@@ -98,27 +82,10 @@ Proof.
 Qed.
 
 
-Goal LEM' <-> Peirce.
+Goal LEM' <=> Peirce.
 Proof.
   split.
-  - intros lem X Y H. destruct (lem X) as [nX | x].
-    apply H. intro x. exfalso. apply nX. all : trivial.
+  - intros lem X Y H. destruct (lem X) as [x | nX].
+    exact x. apply H. intro x. exfalso. apply nX. exact x.
   - apply Peirce_LEM.
-Qed.
-
-
-Goal Peirce <-> DN'.
-Proof.
-  split.
-  - intros peirce X nnX. apply (peirce _ False). intro nX. contradiction.
-  - apply DN_Peirce.
-Qed.
-
-
-Goal LEM' <-> CP'.
-Proof.
-  split.
-  - intros lem X Y H x. destruct (lem Y) as [nY | y].
-    exfalso. apply H; tauto. tauto.
-  - apply CP_LEM.
 Qed.
