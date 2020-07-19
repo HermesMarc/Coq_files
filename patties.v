@@ -4,7 +4,9 @@ Require Import Arith.
 
 (** Formalized Solution for the following riddle *)
 
-(* You’re facing your friend, Caryn, in a “candy-off,” which works as follows: There’s a pile of 100 caramels and one peppermint patty. You and Caryn will go back and forth taking at least one and no more than five caramels from the candy pile in each turn. The person who removes the last caramel will also get the peppermint patty. And you love peppermint patties.
+(* You’re facing your friend, Caryn, in a “candy-off,” which works as follows: There’s a pile of 100 caramels and one peppermint patty. 
+You and Caryn will go back and forth taking at least one and no more than five caramels from the candy pile in each turn. The person 
+who removes the last caramel will also get the peppermint patty. And you love peppermint patties.
 
 Suppose Caryn lets you decide who goes first. Who should you choose in order to make sure you win the peppermint patty?
 
