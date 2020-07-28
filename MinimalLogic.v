@@ -131,3 +131,24 @@ Section Minimal.
 
 
 End Minimal.
+
+
+Section NonDeduc.
+
+    (* Meta Argument: Assume it is possible to show 
+       Peirce -> Explosion = forall X, |- F -> X. 
+       Since F was an arbitrary choice, this would mean we would really have a way of showing : *)
+    Hypothesis H : forall Y, Peirce -> forall X, nil ⊢ Y --> X.
+
+    (* However it then turns out that *)
+    Goal Peirce -> forall P, nil ⊢ P.
+    Proof.
+      intros peirce P.
+      enough (nil ⊢ (P --> P) --> P) as C.
+      revert C. eapply IE, II, IE.
+      apply Ctx; firstorder.
+      eapply II, Ctx; firstorder.
+      now apply H.
+    Qed.
+       
+End NonDeduc.
