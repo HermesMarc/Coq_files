@@ -267,7 +267,3 @@ end.
 
 
 Definition P N := exists x y, x <> 1 /\ x*y = N.
-
-
-Inductive Prime n : Prop :=
-CP : n > 1 /\ (forall x, x < n -> Prime x) -> Prime n.
