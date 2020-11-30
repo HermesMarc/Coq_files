@@ -236,7 +236,7 @@ Proof.
   - right. now apply negQ_prime.  
 Defined.
 
-
+(* Would be even better with x <> N instead of x <> 1 *)
 Lemma dec_prime N : N > 1 -> 
   {x & {y & x < N /\ x <> 1 /\ x*y = N }} + prime N.
 Proof.
@@ -267,7 +267,3 @@ end.
 
 
 Definition P N := exists x y, x <> 1 /\ x*y = N.
-
-
-Inductive Prime n : Prop :=
-CP : n > 1 /\ (forall x, x < n -> Prime x) -> Prime n.

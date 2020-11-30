@@ -1,4 +1,4 @@
-Require Import Lists.List.
+Require Import Arith Lists.List.
 
 
 Definition injective {X Y} (f : X -> Y) :=
@@ -48,7 +48,7 @@ Section Bijection.
 
   Lemma surj_g : forall N, { L & g L = N }.
   Proof.
-    apply (well_founded_induction_type Wf_nat.lt_wf); intros [|N] IH.
+    apply (well_founded_induction_type lt_wf); intros [|N] IH.
     - exists nil. reflexivity.
     - rewrite <- (code_decode N).
       destruct (decode N) as [x n] eqn:H.

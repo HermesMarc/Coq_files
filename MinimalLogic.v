@@ -130,14 +130,11 @@ Section Minimal.
   Qed.
 
 
-End Minimal.
-
-
-Section NonDeduc.
+  Section NonDeduc.
 
     (* Meta Argument: Assume it is possible to show 
-       Peirce -> Explosion = forall X, |- F -> X. 
-       Since F was an arbitrary choice, this would mean we would really have a way of showing : *)
+      Peirce -> Explosion = forall X, |- F -> X. 
+      Since F was an arbitrary choice, this would mean we would really have a way of showing : *)
     Hypothesis H : forall Y, Peirce -> forall X, nil ⊢ Y --> X.
 
     (* However it then turns out that *)
@@ -151,4 +148,9 @@ Section NonDeduc.
       now apply H.
     Qed.
        
-End NonDeduc.
+  End NonDeduc.
+
+
+End Minimal.
+
+
