@@ -140,7 +140,7 @@ Section WitnessOperator.
     destruct H as [n H]. destruct (Dec_q n).
     - eapply grounded, qT, H.
     - tauto.
-  Defined. 
+  Defined.
 
 End WitnessOperator.
 
@@ -266,8 +266,4 @@ match (lt_dec 1 N) with
 end.
 
 
-<<<<<<< HEAD
 Definition P N := exists x y, x <> 1 /\ x*y = N.
-=======
-Definition P N := exists x y, x <> 1 /\ x*y = N.
->>>>>>> 143832712e37ecb8913e73fe59622c7813ffb4f5

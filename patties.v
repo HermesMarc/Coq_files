@@ -1,6 +1,6 @@
 Require Import Equations.Equations.
-Require Import Lia.
-Require Import Arith.
+Require Import Arith Lia.
+
 
 (** Formalized Solution for the following riddle *)
 
@@ -71,7 +71,7 @@ Section Uniqueness.
     intros. destruct (le_ge_dec a1 a2).
     1 : cut (a2 * y - a1 * y = b1 - b2).
     3 : cut (a1 * y - a2 * y = b2 - b1).
-    all : try (rewrite <- Nat.mul_sub_distr_r; intros ?%both_are_O); lia.
+    all : try (rewrite <- Nat.mul_sub_distr_r; intros ?%both_are_O); nia.
   Qed.
 
 

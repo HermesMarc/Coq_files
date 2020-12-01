@@ -1,5 +1,7 @@
+Definition Dec {X} p := forall x : X , {p x} + {~ p x}. 
 
 Module WO.
+Section WO.
 
   Variable q : nat -> Prop.
   Variable Dec_q : Dec q.
@@ -35,15 +37,27 @@ Module WO.
   Defined. 
 
 End WO.
+End WO.
 
 
 
 Section Exmpl.
 
-Lemma H : exists x, x > 10.
-Proof.
-Admitted. (* Defined *)
+Require Import Lia.
 
-(* Compute sigT1 (Witness _ H _). *)
+(* Show that x > 10 is decidable *)
+Lemma H1 : Dec (fun x => x > 10).
+Proof.
+  intros x. apply Compare_dec.lt_dec.
+Defined. 
+
+(* Proof the proposition that there is a number bigger then 10. Here we use 42 for x. *)
+Lemma H2 : exists x, x > 10.
+Proof.
+  exists 42. lia.
+Defined.
+
+(* Compute the computational witness that the witness operator now gets, given the proof H2 *)
+Compute projT1 (WO.Witness _ H1 H2).
 
 End Exmpl.
