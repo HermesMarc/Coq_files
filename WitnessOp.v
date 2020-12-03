@@ -46,13 +46,13 @@ Section Exmpl.
 Require Import Lia.
 
 (* Show that x > 10 is decidable *)
-Lemma H1 : Dec (fun x => x > 10).
+Lemma H1 : Dec (fun x => x > 12).
 Proof.
   intros x. apply Compare_dec.lt_dec.
 Defined. 
 
 (* Proof the proposition that there is a number bigger then 10. Here we use 42 for x. *)
-Lemma H2 : exists x, x > 10.
+Lemma H2 : exists x, x > 12.
 Proof.
   exists 42. lia.
 Defined.
