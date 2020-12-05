@@ -21,19 +21,20 @@ Section Bijection.
 
   
   (* This codes lists to numbers. We will show that it is a bijection. *)
-  Fixpoint g (L : list nat) := match L with
-                             | nil => 0
-                             | x::l => S (code (x, g l))
-                             end.
+  Fixpoint g (L : list nat) := 
+    match L with
+    | nil => 0
+    | x::l => S (code (x, g l))
+    end.
 
   (* We first show that g is injective + surjective and then use these results to define and verify its inverse function. *)
 
-  Lemma inj_code : injective code.
+  Fact inj_code : injective code.
   Proof.
     intros ? ? ?; rewrite <-decode_code; congruence.
   Defined.
     
-  Fact inj_g : injective g.
+  Lemma inj_g : injective g.
   Proof.
     intros A; induction A.
     - intros []. tauto. discriminate.
