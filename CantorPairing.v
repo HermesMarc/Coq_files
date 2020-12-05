@@ -14,11 +14,11 @@ Definition bijection X Y :=
   { f : X -> Y & { g & inv g f /\ inv f g }}.
 
 
-Lemma size_rect {X} code f : 
-  (forall x, (forall y : X, code y < code x -> f y) -> f x) -> forall x, f x.
+Lemma size_rect {X} σ f : 
+  (forall x, (forall y : X, σ y < σ x -> f y) -> f x) -> forall x, f x.
 Proof.
   intros H x. apply H.
-  induction (code x).
+  induction (σ x).
   - intros y. now intros F % PeanoNat.Nat.nlt_0_r. 
   - intros y Hy. apply H.
     intros z Hz. apply IHn. lia.
@@ -86,18 +86,18 @@ Proof.
   - rewrite code_next. cbn. f_equal. apply rec.
     rewrite code_next; auto.
   - reflexivity.
-Defined.
+Qed.
 
 Fact inv_cd : inv code decode.
 Proof.
   intros ?. apply inj_decode. now rewrite inv_dc.
-Defined.
+Qed.
 
 
 Corollary Bij_Nat_NatNat : bijection nat (nat * nat).
 Proof.
   exists decode, code. split. apply inv_cd. apply inv_dc.
-Defined.
+Qed.
 
 
 Fact bound x y n : code (x, y) = n -> y < S n.
