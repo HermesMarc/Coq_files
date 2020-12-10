@@ -36,19 +36,19 @@ Proof.
 Defined.
 
 
-(* D y x gives the number of times y can be substracted from x *)
-Definition D y x := projT1 (DIV y x).
-(* M y x gives the remainder of x after division by y *)
-Definition M y x := projT1 (projT2 (DIV y x)).
+(* Div y x gives the number of times y can be substracted from x *)
+Definition Div y x := projT1 (DIV y x).
+(* Mod y x gives the remainder of x after division by y *)
+Definition Mod y x := projT1 (projT2 (DIV y x)).
 
 
-Fact Factor y x : x = (D y x)*y + M y x.
+Fact Factor y x : x = (Div y x)*y + Mod y x.
 Proof.
   apply (projT2 (projT2 (DIV _ _))).
 Qed.
 
 
-Fact M_bound y x : 0 < y -> M y x < y.
+Fact Mod_bound y x : 0 < y -> Mod y x < y.
 Proof.
   apply (projT2 (projT2 (DIV _ _))).
 Qed.
@@ -79,31 +79,32 @@ Section Uniquness.
 
 
   Theorem unique x a b : b < y ->
-    x = a*y + b <-> a = D y x /\ b = M y x.
+    x = a*y + b <-> a = Div y x /\ b = Mod y x.
   Proof.
     split.
     - rewrite (Factor y x) at 1. intros.
-      specialize (M_bound y x) as ?.
+      specialize (Mod_bound y x) as ?.
       apply Fac_unique; lia.
     - intros [-> ->]. apply Factor.
   Qed.
   
   
   Corollary Fac_eq a b : b < y ->
-      a = D y (a*y + b) /\ b = M y (a*y + b).
+      a = Div y (a*y + b) /\ b = Mod y (a*y + b).
   Proof. intros. now apply (unique _). Qed.  
 
 
 End Uniquness.
 
 
-Lemma M_for_multiple y x : M y x = 0 <=> { k & x = k*y }.
+Lemma Mod_for_multiple y x : Mod y x = 0 <=> { k & x = k*y }.
 Proof.
   split.
-  - intros H. exists (D y x). rewrite plus_n_O. rewrite <- H. apply Factor.
+  - intros H. exists (Div y x). rewrite plus_n_O. rewrite <- H. apply Factor.
   - intros [k ->]. destruct y. cbn. lia.
     assert (0 < S y) as [? H]%(Fac_eq _ k) by lia. now rewrite <- plus_n_O in H.
 Qed.
+
 
 
 
@@ -185,9 +186,9 @@ Qed.
 Lemma dec_divides x n : dec(divides x n).
 Proof.
   unfold divides.
-  destruct (Nat.eq_dec (M x n) 0 ) as [ [k H]%M_for_multiple |H].
+  destruct (Nat.eq_dec (Mod x n) 0 ) as [ [k H]%Mod_for_multiple |H].
   - left. exists k; auto.
-  - right. intros [k Hk]. apply H, M_for_multiple.
+  - right. intros [k Hk]. apply H, Mod_for_multiple.
     exists k; auto.
 Qed.
 
@@ -232,38 +233,84 @@ Lemma dec_prime' N : N > 1 ->
   {x & x < N /\ x <> 1 /\ divides x N } + prime N.
 Proof.
   intros H. destruct (dec_bounded_Q N).
-  - now left.  
+  - now left.
   - right. now apply negQ_prime.  
 Defined.
 
-(* Would be even better with x <> N instead of x <> 1 *)
-Lemma dec_prime N : N > 1 -> 
-  {x & {y & x < N /\ x <> 1 /\ x*y = N }} + prime N.
+
+Lemma dec_prime {N} : N > 1 -> 
+  {x & {y & x < N /\ y < N /\ x*y = N }} + prime N.
 Proof.
   intros HN.
   destruct (dec_prime' N HN) as [ [x (?&?&div)]  |].
   - left. apply Witness in div. destruct div as [y Hy].
-    exists x, y. lia. 
+    exists x, y. nia. 
     intros ?. unfold dec. decide equality.
   - now right.
 Qed.
 
 
+
 Definition primeb N :=
 match (lt_dec 1 N) with
-| left H => if (dec_prime N H) then false else true
+| left H => if (dec_prime H) then false else true
 | right _ => false
 end.
 
 
 Definition decomp' N := 
 match (lt_dec 1 N) with
-| left H => match (dec_prime N H) with 
-            | inl D  => projT1 D
+| left H => match (dec_prime H) with 
+            | inl Div  => projT1 Div
             | inr _ => N
             end
 | right _ => N
 end.
 
 
-Definition P N := exists x y, x <> 1 /\ x*y = N.
+
+
+
+
+
+Fixpoint pow k x := 
+  match k with
+  | 0 => 1
+  | S n => x*(pow n x)
+  end.
+
+Notation "x ^^ k" := (pow k x) (at level 19).
+
+
+Lemma lt_rect f : 
+(forall x, (forall y, y < x -> f y) -> f x) -> forall x, f x.
+Proof.
+Admitted.
+
+Lemma exponent x p : p > 1 ->
+  { k & Mod ( p^^k ) (S x) = 0 /\ Mod ( p^^(S k) ) (S x) <> 0 }.
+Proof.
+  intros Hp.
+  destruct x.
+  - exists 0. cbn. repeat split. intros []%Mod_for_multiple.
+    destruct x; lia.
+  - revert x. apply lt_rect. intros x rect.
+    remember (S (S x)) as N. assert (N > 1) by lia.
+Admitted.
+
+Definition expo x p := 
+  match (lt_dec 1 p) with
+  | left H => Some (projT1 (exponent x p H))
+  | right _ => None
+  end.
+
+Lemma prime_decomp x y :
+  (forall p, prime p -> expo x p = expo y p) -> x = y.
+Proof.
+Admitted.
+
+
+
+
+
+

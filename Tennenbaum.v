@@ -22,7 +22,8 @@ Definition std x := exists n, ϕ n = x.
 
 (* now assume that ϕ is not surjective and D countable *)
 Hypothesis Hnstd : exists e, ~ std e.
-Hypothesis Hcount : countable D.
+Variable f : nat -> D.
+Hypothesis surj_f : surj f.
 
 
 Lemma undec_std : (forall x, dec(std x) ) -> False.

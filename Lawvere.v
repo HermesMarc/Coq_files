@@ -47,7 +47,7 @@ Proof.
 Qed.
 
 
-Fact CP_Lawvere' {X Y} :
+Fact CP_Lawvere'' {X Y} :
     (exists g, forall y : Y, g y <> y) -> 
     forall (f : X -> (X -> Y) ), ~ surj f.
 Proof.
@@ -59,9 +59,9 @@ Qed.
 
 Definition Pow X := X -> bool.
 
-Lemma Cantor : ~ exists f : nat -> Pow nat, surj f.
+Example Cantor : ~ exists f : nat -> Pow nat, surj f.
 Proof.
     intros [f Hf].
-    refine (CP_Lawvere' _ f Hf).
+    refine (CP_Lawvere'' _ f Hf).
     exists negb. now intros [].
 Qed.
