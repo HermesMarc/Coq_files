@@ -3,8 +3,7 @@
 Definition ext_representable {I X Y} (g : X -> Y) f :=
     exists i : I, forall x : X, f i x = g x.
 
-(* Remark 2.2 on nLab: Lawvere pointed out that ext_surj (he calls it weak surj.) is enough to show the fixpoint theorem *)
-(* It turns out, that it even makes the proof the tiniest bit nicer *)
+(* Remark 2.2 on nLab: Lawvere pointed out that surjectivity up to functional extensionality (he calls it weak surj.) is enough to show the fixpoint theorem *)
 Definition ext_surj {I X Y} f :=
     forall g, @ext_representable I X Y g f.
 
@@ -21,18 +20,17 @@ Qed.
 
 Definition diag {X Y} (g : Y -> Y) f := fun x : X => g (f x x).
 
-
 (* If we are interested in a fixpoint for one particular function g, we only need a representation (up to func-ext) of g (f x x) *)
-Fact Lawvere {X Y : Type} g f :
-    @ext_representable X X Y (fun x => g (f x x)) f  
-    -> exists y, g y = y.
+Fact Lawvere {X Y} g (f : X -> X -> Y) :
+    ext_representable (diag g f) f  -> exists y, g y = y.
 Proof.
+    unfold diag.
     intros [a ]. now exists (f a a).
 Qed.
 
 
-Fact Lawvere' {X Y} f :
-    @ext_surj X X Y f -> forall g, exists y : Y, g y = y.
+Fact Lawvere' {X Y} (f : X -> X -> Y) :
+    ext_surj f -> forall g, exists y : Y, g y = y.
 Proof.
     intros Hf g.
     apply (Lawvere g f), Hf.

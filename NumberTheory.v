@@ -193,14 +193,20 @@ Proof.
 Qed.
 
 
+Lemma eq_dec (x y : nat) : dec (x = y).
+Proof.
+  unfold dec. decide equality.
+Qed.
+
+
+Hint Resolve DeMorgan eq_dec dec_conj dec_neg dec_divides : decs.
+
 Definition Q N x := x <> 1 /\ divides x N.
 
 
 Lemma Dec_Q : forall N, Dec(Q N).
 Proof.
-  intros N x. apply dec_conj.
-  apply dec_neg. unfold dec. decide equality. 
-  apply dec_divides.
+  intros N x. unfold Q. eauto with decs.
 Qed.
 
 
@@ -224,8 +230,7 @@ Proof.
   specialize (divides_le _ _ N0 DxN) as ?.
   assert (x = N \/ x < N) as [|F] by lia; auto.
   specialize (H F). apply DeMorgan in H. intuition lia.
-  apply dec_neg. unfold dec. decide equality. 
-  apply dec_divides.
+  all : eauto with decs.
 Qed.
 
 
