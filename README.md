@@ -4,7 +4,7 @@ Some small projects in Coq I have finished or am still working on.
 
 - [`CantorPairing.v`](/CantorPairing.v) contains a definition of the standard [Cantor pairing function](https://en.wikipedia.org/wiki/Pairing_function#Cantor_pairing_function) and its inverse, as well as a proof that they are bijections.
 
-- [`Nat_listNat.v`](/Nat_listNat.v) builds on the above and proofs that there is a bijection between the type `nat` and the type of lists over `nat`.
+- [`Nat_listNat.v`](/Nat_listNat.v) proofs that there is a bijection between the type `nat` and the type `list nat`.
 
 - [`patties.v`](/patties.v) Contains a formalized solution for a riddle. More details on the riddle can be found in the code.
 
