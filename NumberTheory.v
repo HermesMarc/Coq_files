@@ -162,6 +162,9 @@ Section Homomorphism.
   Fact Mod0_is_0 : M 0 = 0.
   Proof. destruct m; reflexivity. Qed.
 
+  Fact Modm_is_0 : M m = 0.
+  Proof. apply Mod_divides. exists 1. lia. Qed.
+
   Corollary ModMod_is_Mod x : M (M x) = M x.
   Proof.
     change (M x) with (0 + M x) at 1. 
@@ -334,7 +337,7 @@ Section PrimeDec.
       intros n. apply dec_imp; eauto with decs.
   Qed.
 
-  Lemma irred_factorize N : irred N + 
+  Lemma dec_irred_factor N : irred N + 
     (N > 1 -> {x & {y & 1 < x < N  /\ x*y = N }} ).
   Proof.
     destruct (irred1 N) as [| H]; auto.
@@ -343,13 +346,57 @@ Section PrimeDec.
     exists x, y. nia.
   Qed.
 
+  Lemma irred_factor n : n > 1 -> { k | irred k /\ Mod k n = 0}.
+  Proof.
+    pattern n. apply lt_rect. intros N IH HN.
+    destruct (dec_irred_factor N) as [|H].
+    - exists N. split. auto.
+      apply Mod_divides. exists 1; lia.
+    - destruct (H HN) as [x [y ((H1&H2)&H3) ]].
+      assert (x > 1) by nia.
+      destruct (IH x H2 H1) as [k Hk].
+      exists k. split. tauto.
+      rewrite <-H3. rewrite Mod_mult_hom, (proj2 Hk).
+      apply Mod0_is_0.
+  Qed.
 
-  Definition prime p := p > 1 /\ forall a b, Mod p (a*b) = 0 -> Mod p a = 0 \/ Mod p b = 0.
+  
+  Lemma Nemo n a b :
+    irred n -> a < n -> b < n -> n = a * b -> False.
+  Proof.
+    intros [? H] Ha ? Eq.
+    apply H in Ha. lia.
+    now rewrite Eq, Mod_mult_hom, Modm_is_0, Mod0_is_0.
+  Qed.
+
+
+
+  Lemma irred_integral_domain n a b : irred n ->
+    Mod n (a * b) = 0 -> Mod n a = 0 \/ Mod n b = 0.
+  Proof.
+    intros H.
+    specialize (Nemo n (Mod n a) (Mod n b) H) as h. 
+    assert ( Mod n a <> 0 /\ Mod n b <> 0 -> Mod n (a * b) <> 0).
+    - intros [Ha Hb] Eq. rewrite <- ModMod_is_Mod in Ha, Hb.
+      eapply Nemo. apply H. 1, 2: apply (Mod_bound n).
+      admit. admit. rewrite Mod_mult_hom in Eq. 
+
+  Admitted.
+
+
+  Lemma irred_inverses n a : irred n ->
+    Mod n a <> 0 -> exists b, Mod n (a * b) = 1.
+  Proof.
+  Admitted.
+
+
+
+  Definition prime p := p > 1 /\ forall a b, Mod p (a * b) = 0 -> Mod p a = 0 \/ Mod p b = 0.
 
   Lemma prime_irred_equiv p : irred p <-> prime p.
   Proof.
     split; intros [? H]; split; auto.
-    - admit.
+    - intros a b. now apply irred_integral_domain.
     - intros n H1 H2. 
       destruct (fst (Mod_divides _ _) H2) as [k Hk].
       destruct (H k n).
@@ -358,7 +405,7 @@ Section PrimeDec.
         assert (p*(x*n) = p*1) as ?%Nat.mul_cancel_l by lia.
         apply Nat.mul_eq_1 in H5. all: lia.
       + apply Mod_le in H3. all: lia.
-  Admitted.
+  Qed.
 
   Corollary dec_prime : Dec(prime).
   Proof.
@@ -404,19 +451,6 @@ Section PrimeInf.
       apply Mod0_is_0. lia.
   Qed.
 
-  Lemma irred_factor n : n > 1 -> exists k, irred k /\ Mod k n = 0.
-  Proof.
-    pattern n. apply lt_rect. intros N IH HN.
-    destruct (irred_factorize N) as [|H].
-    - exists N. split. auto.
-      apply Mod_divides. exists 1; lia.
-    - destruct (H HN) as [x [y ((H1&H2)&H3) ]].
-      assert (x > 1) by nia.
-      destruct (IH x H2 H1) as [k Hk].
-      exists k. split. tauto.
-      rewrite <-H3. rewrite Mod_mult_hom, (proj2 Hk).
-      apply Mod0_is_0.
-  Qed.
 
 
   Goal forall N, exists p, N < p /\ irred p.
