@@ -20,7 +20,12 @@ Qed.
 Lemma lt_rect f :
   (forall x, (forall y, y < x -> f y) -> f x) -> forall x, f x.
 Proof.
-Admitted.
+  intros H x. apply H.
+  induction x.
+  - intros y. now intros F % PeanoNat.Nat.nlt_0_r. 
+  - intros y Hy. apply H.
+    intros z Hz. apply IHx. lia.
+Defined.
 
 
 
@@ -68,40 +73,29 @@ Qed.
 
 Section Uniquness.
 
-  Variable y : nat.
+  Variable m : nat.
   
-  (* Lemma both_are_O a b : *)
-  (*   a*y = b -> b < y -> a = 0 /\ b = 0. *)
-  (* Proof. *)
-  (*   intros E. assert (y = 1*y) as -> by lia. *)
-  (*   rewrite <-E. intros ?%Nat.mul_lt_mono_pos_r. *)
-  (*   split. all: nia. *)
-  (* Qed. *)
-
-
-  Lemma Fac_unique a1 b1 a2 b2 : b1 < y -> b2 < y ->
-            a1*y + b1 = a2*y + b2 -> a1 = a2 /\ b1 = b2.
+  Lemma Fac_unique a1 b1 a2 b2 : b1 < m -> b2 < m ->
+    a1*m + b1 = a2*m + b2 -> a1 = a2 /\ b1 = b2.
   Proof.
-    intros. destruct (le_ge_dec a1 a2).
-    1 : cut (a2 * y - a1 * y = b1 - b2).
-    3 : cut (a1 * y - a2 * y = b2 - b1).
-    all : try (rewrite <- Nat.mul_sub_distr_r); nia.
+    intros.
+    destruct (Nat.lt_trichotomy a1 a2) as [ |[]]; nia.
   Qed.
 
 
-  Theorem unique x a b : b < y ->
-    x = a*y + b <-> Div y x = a /\ Mod y x = b.
+  Theorem unique x a b : b < m ->
+    x = a*m + b <-> Div m x = a /\ Mod m x = b.
   Proof.
     split.
-    - rewrite (Factor y x) at 1. intros.
-      specialize (Mod_bound y x) as ?.
+    - rewrite (Factor m x) at 1. intros.
+      specialize (Mod_bound m x) as ?.
       apply Fac_unique; lia.
     - intros [<- <-]. apply Factor.
   Qed.
   
   
-  Corollary Fac_eq a b : b < y ->
-      Div y (a*y + b) = a /\ Mod y (a*y + b) = b.
+  Corollary Fac_eq a b : b < m ->
+      Div m (a*m + b) = a /\ Mod m (a*m + b) = b.
   Proof. intros. now apply (unique _). Qed.
 
 
@@ -115,12 +109,19 @@ Proof.
   - intros H. exists (Div y x). rewrite plus_n_O. rewrite <- H. apply Factor.
   - intros [k ->]. destruct y. cbn. lia.
     assert (0 < S y) as [? H]%(Fac_eq _ k) by lia. now rewrite <- plus_n_O in H.
-Qed.
+Defined.
 
 Lemma Mod_le x N : N > 0 -> Mod x N = 0 -> x <= N.
 Proof.
-  intros ? [k ?]%Mod_divides. assert (k > 0) by lia. nia.
+  intros ? [[] ?]%Mod_divides; lia.
 Qed.
+
+Lemma Mod1_is_0 x : Mod 1 x = 0.
+Proof.
+  assert (Mod 1 x = 0 <-> Mod 1 x < 1) as -> by lia.
+  apply Mod_bound; lia.
+Qed.
+
 
 
 Section Homomorphism.
@@ -218,7 +219,7 @@ End WitnessOperator.
 Lemma eq_dec (x y : nat) : dec (x = y).
 Proof.
   unfold dec. decide equality.
-Qed.
+Defined.
 
 Lemma dec_conj A B : dec A -> dec B -> dec (A /\ B).
 Proof.
@@ -348,7 +349,7 @@ Section PrimeDec.
 
   Lemma irred_factor n : n > 1 -> { k | irred k /\ Mod k n = 0}.
   Proof.
-    pattern n. apply lt_rect. intros N IH HN.
+    induction n as [N IH] using lt_rect. intros HN.
     destruct (dec_irred_factor N) as [|H].
     - exists N. split. auto.
       apply Mod_divides. exists 1; lia.
@@ -360,27 +361,52 @@ Section PrimeDec.
       apply Mod0_is_0.
   Qed.
 
+
+  Lemma irred_Mod_eq m x : 
+    m > 1 -> irred x -> Mod m x = 0 -> m = x.
+  Proof.
+    intros ? [? Hx] Eq.
+    enough (m = x \/ m < x) as []; try lia.
+    apply Hx in Eq; lia.
+    apply Mod_le in Eq; lia.
+  Qed.
+
   
   Lemma Nemo n a b :
     irred n -> a < n -> b < n -> n = a * b -> False.
   Proof.
-    intros [? H] Ha ? Eq.
-    apply H in Ha. lia.
-    now rewrite Eq, Mod_mult_hom, Modm_is_0, Mod0_is_0.
+    intros irred_n ? H ->.
+    apply irred_n in H. lia.
+    apply Mod_divides. exists a; reflexivity.
   Qed.
 
+
+  Lemma Nemo' n a b :
+    irred n -> 0 < a < n -> 0 < b < n -> Mod n (a * b) = 0 -> False.
+  Proof.
+    intros irred_n [? Ha] [? Hb] [k Hk]%Mod_divides.
+    apply irred_n in Ha. rewrite Ha in *.
+    all: assert (k = 0 \/ k = 1 \/ k > 1) as [ ->|[->|]] by lia; try nia.
+    exfalso. apply (Nemo n a b); auto; lia.
+  Admitted.
+
+
+  Lemma irred_integral_domain' n a b : irred n ->
+    Mod n a <> 0 -> Mod n b <> 0 -> Mod n (a * b) <> 0 .
+  Proof.
+    intros irred_n Ha Hb Eq.
+    rewrite <-ModMod_is_Mod in Ha, Hb.
+    rewrite Mod_mult_hom in Eq.
+    apply (Nemo n (Mod n a) (Mod n b)).
+    apply irred_n.
+    all: try (destruct irred_n; apply Mod_bound; lia).
+    apply Mod_le in Eq.
+  Admitted.
 
 
   Lemma irred_integral_domain n a b : irred n ->
     Mod n (a * b) = 0 -> Mod n a = 0 \/ Mod n b = 0.
   Proof.
-    intros H.
-    specialize (Nemo n (Mod n a) (Mod n b) H) as h. 
-    assert ( Mod n a <> 0 /\ Mod n b <> 0 -> Mod n (a * b) <> 0).
-    - intros [Ha Hb] Eq. rewrite <- ModMod_is_Mod in Ha, Hb.
-      eapply Nemo. apply H. 1, 2: apply (Mod_bound n).
-      admit. admit. rewrite Mod_mult_hom in Eq. 
-
   Admitted.
 
 
@@ -479,25 +505,45 @@ End PrimeInf.
 Section PrimeDecomp.
 
 
-  Lemma exponent x p : p > 1 ->
-    { k & Mod ( p^k ) (S x) = 0 /\ Mod ( p^(S k) ) (S x) <> 0 }.
+  Lemma exponent p X : Mod p X = 0 ->
+    { k & {x & X = x * p^k /\ (p > 1 -> X <> 0 -> Mod p x <> 0) }}.
+  Proof.
+    intros H. destruct p as [|[]].
+    - cbn in *. rewrite H.
+      exists 0, 0; cbn; lia.
+    - exists 0, X; cbn; lia.
+    - induction X as [X Hrec] using lt_rect.
+      destruct X.
+      exists 0, 0; cbn; split; auto.
+      apply Mod_divides in H.
+      destruct H as [x Hx].
+      destruct (eq_dec (Mod (S (S n)) x) 0 ).
+      + destruct (Hrec x) as (k' & x' & H'); try lia. 
+        exists (S k'), x'.
+        split; rewrite Hx, (proj1 H'). cbn; lia.
+        intros. apply H'; lia. 
+      + exists 1, x; cbn; intuition lia.
+  Defined.
+
+
+  Definition expo p X := 
+    match (eq_dec (Mod p X) 0) with
+    | left H => (projT1 (exponent p X H))
+    | right _ => 0
+    end.
+
+
+  Lemma expo_hom p x y : p > 1 -> 
+    expo p (x * y) = expo p x + expo p y.
   Proof.
     intros Hp.
     destruct x.
-    - exists 0. cbn. repeat split. intros []%Mod_divides.
-      destruct x; lia.
-    - revert x. apply lt_rect. intros x rect.
-      remember (S (S x)) as N. assert (N > 1) by lia.
+    
   Admitted.
 
-  Definition expo x p := 
-    match (lt_dec 1 p) with
-    | left H => Some (projT1 (exponent x p H))
-    | right _ => None
-    end.
 
   Lemma prime_decomp x y :
-    (forall p, prime p -> expo x p = expo y p) -> x = y.
+    (forall p, prime p -> expo p x = expo p y) -> x = y.
   Proof.
     revert y. pattern x. revert x. apply lt_rect.
     intros x Hrec. intros y H.
