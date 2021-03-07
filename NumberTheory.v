@@ -1,3 +1,4 @@
+Require Import Equations.Equations.
 Require Import Arith Lia.
 
 
@@ -215,6 +216,19 @@ Section WitnessOperator.
 End WitnessOperator.
 
 
+Lemma lt_trichotomy x y : {x < y} + {x = y} + {y < x}.
+Proof.
+Admitted.
+
+
+Lemma lt_dec x y : dec (x < y).
+Proof.
+  induction y.
+  - right. lia.
+  - destruct IHy.
+    left. lia. right.
+    intros 
+Admitted.
 
 Lemma eq_dec (x y : nat) : dec (x = y).
 Proof.
@@ -250,7 +264,7 @@ Defined.
 Lemma neg_imp A B : dec A -> dec B -> ~(A -> B) -> A /\ ~B.
 Proof.
   intros [][]?; tauto.
-Qed.
+Defined.
 
 
 Hint Resolve neg_and neg_imp eq_dec dec_conj dec_disj dec_imp dec_neg : decs.
@@ -264,21 +278,31 @@ Admitted.
 
 Lemma dec_bounded_forall N p  : Dec p -> dec (forall x, x < N -> p x).
 Proof.
-Admitted.
+  intros Dec_p. induction N.
+  left. lia.
+  destruct (Dec_p N) as [HN | HN].
+  - destruct (IHN) as [IH | IH].
+    +  left. intros x Hx.
+    assert (x = N \/ x < N) as [->|] by lia; auto.
+    + right. intros H. apply IH.
+      intros x Hx. apply H. lia.
+  - right. intros H. apply HN.
+    apply H. lia. 
+Defined.
 
 
 Lemma neg_bounded_forall N p : Dec p -> (~ forall x, x < N -> p x) -> exists x, x < N /\ ~ p x. 
 Proof.
-  intros Hp H.
+  intros Dec_p H.
   induction N. exfalso. apply H; lia.
-  destruct (Hp N).
+  destruct (Dec_p N).
   - destruct IHN as [n ]. 
     + intros H1. apply H. intros.
-      assert (x = N \/ x < N) as [->|] by lia. 
+    assert (x = N \/ x < N) as [->|] by lia. 
       auto. now apply H1.
     + exists n. intuition lia. 
   - exists N. auto.
-Qed.
+Defined.
 
 
 
@@ -316,7 +340,12 @@ Section PrimeDec.
     intros n. apply dec_conj. apply lt_dec.
     apply dec_bounded_forall.
     intros x. eauto with decs.
-  Qed.
+  Defined.
+
+
+
+        Definition F x := if dec_irred x then 1 else 0.
+        Compute F 4.
 
 
   Lemma irred1 N : irred N +
@@ -336,16 +365,16 @@ Section PrimeDec.
     - apply lt_dec.
     - apply dec_bounded_forall.
       intros n. apply dec_imp; eauto with decs.
-  Qed.
+  Defined.
 
   Lemma dec_irred_factor N : irred N + 
-    (N > 1 -> {x & {y & 1 < x < N  /\ x*y = N }} ).
+    (N > 1 -> {x & {y & 1 < x < N /\  1 < y < N /\ x*y = N }} ).
   Proof.
     destruct (irred1 N) as [| H]; auto.
     right. intros [x Hx]%H.
     destruct Hx as (?&[y Hy]%Mod_divides&?).
     exists x, y. nia.
-  Qed.
+  Defined.
 
   Lemma irred_factor n : n > 1 -> { k | irred k /\ Mod k n = 0}.
   Proof.
@@ -357,7 +386,7 @@ Section PrimeDec.
       assert (x > 1) by nia.
       destruct (IH x H2 H1) as [k Hk].
       exists k. split. tauto.
-      rewrite <-H3. rewrite Mod_mult_hom, (proj2 Hk).
+      rewrite <-(proj2 H3). rewrite Mod_mult_hom, (proj2 Hk).
       apply Mod0_is_0.
   Qed.
 
@@ -505,6 +534,40 @@ End PrimeInf.
 Section PrimeDecomp.
 
 
+  Equations expo (p X : nat) : nat by wf X :=
+    expo p 0 := 0;
+    expo p 1 := 0;
+    expo p X := match dec_irred_factor X with 
+                | inl _ => if eq_dec p X then 1 else 0
+                | inr H => match lt_dec 1 X with
+                          | left X1 => 
+                          match (H X1) with
+                            existT _ x (existT _ y _) => (expo p x) + (expo p y) 
+                          end
+                          | right _ => 0
+                          end
+                end.
+  Next Obligation.
+    nia.
+  Defined.
+  Next Obligation.
+    nia.
+  Defined.
+
+
+
+  Definition expo' p X :=
+    if lt_dec p 1
+    then if lt_dec X 1
+          then 0
+          else match dec_irred_factor X with
+                | inl _ => (if eq_dec p X then 1 else 0)
+                | inr  _ => 0
+                end 
+    else 0.
+
+
+
   Lemma exponent p X : Mod p X = 0 ->
     { k & {x & X = x * p^k /\ (p > 1 -> X <> 0 -> Mod p x <> 0) }}.
   Proof.
@@ -536,9 +599,7 @@ Section PrimeDecomp.
   Lemma expo_hom p x y : p > 1 -> 
     expo p (x * y) = expo p x + expo p y.
   Proof.
-    intros Hp.
-    destruct x.
-    
+    intros Hp.    
   Admitted.
 
 

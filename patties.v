@@ -54,24 +54,12 @@ Qed.
 Section Uniqueness.
 
   Variables y : nat.
-  
-
-  Lemma both_are_O a b :
-    a*y = b -> b < y -> a = 0 /\ b = 0.
-  Proof.
-    intros E. assert (y = 1*y) as -> by lia.
-    rewrite <-E. intros ?%Nat.mul_lt_mono_pos_r.
-    split. all: nia.
-  Qed.
-
 
   Lemma Fac_unique a1 b1 a2 b2 : b1 < y -> b2 < y ->
-            a1*y + b1 = a2*y + b2 -> a1 = a2 /\ b1 = b2.
+    a1*y + b1 = a2*y + b2 -> a1 = a2 /\ b1 = b2.
   Proof.
-    intros. destruct (le_ge_dec a1 a2).
-    1 : cut (a2 * y - a1 * y = b1 - b2).
-    3 : cut (a1 * y - a2 * y = b2 - b1).
-    all : try (rewrite <- Nat.mul_sub_distr_r; intros ?%both_are_O); nia.
+    intros.
+    destruct (Nat.lt_trichotomy a1 a2) as [ |[]]; nia.
   Qed.
 
 

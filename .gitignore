@@ -1,3 +1,5 @@
 *.nia.cache
 *.lia.cache
 *.code-workspace
+tree_normalizing.v
+Gauss_Sum.v
