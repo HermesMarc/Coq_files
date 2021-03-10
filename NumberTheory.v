@@ -112,12 +112,18 @@ Proof.
     assert (0 < S y) as [? H]%(Fac_eq _ k) by lia. now rewrite <- plus_n_O in H.
 Defined.
 
-Lemma Mod_le x N : N > 0 -> Mod x N = 0 -> x <= N.
+Fact Mod_le x N : N > 0 -> Mod x N = 0 -> x <= N.
 Proof.
   intros ? [[] ?]%Mod_divides; lia.
 Qed.
 
-Lemma Mod1_is_0 x : Mod 1 x = 0.
+Fact Mod_id m x : x < m -> Mod m x = x.
+Proof.
+  intros H.
+  apply (Fac_eq m 0 x H).
+Qed.
+
+Fact Mod1_is_0 x : Mod 1 x = 0.
 Proof.
   assert (Mod 1 x = 0 <-> Mod 1 x < 1) as -> by lia.
   apply Mod_bound; lia.
@@ -152,8 +158,17 @@ Section Homomorphism.
     f_equal. lia.
   Qed.
 
+  Lemma Mod_mult_hom_l x y : 
+    M (x * y) = M (M x * y).
+  Proof.
+    symmetry.
+    erewrite <-(Mod_plus_multiple (D x * y)).
+    rewrite (Factor m x) at 3.
+    f_equal. lia.
+  Qed.
+
   Theorem Mod_mult_hom x y:
-  M (x * y) = M (M x * M y).
+    M (x * y) = M (M x * M y).
   Proof.
     symmetry.
     erewrite <-(Mod_plus_multiple (D x * D y * m + D x * M y + D y * M x )).
@@ -227,7 +242,7 @@ Proof.
   - right. lia.
   - destruct IHy.
     left. lia. right.
-    intros 
+    intros. 
 Admitted.
 
 Lemma eq_dec (x y : nat) : dec (x = y).
@@ -345,7 +360,7 @@ Section PrimeDec.
 
 
         Definition F x := if dec_irred x then 1 else 0.
-        Compute F 4.
+        
 
 
   Lemma irred1 N : irred N +
@@ -400,43 +415,46 @@ Section PrimeDec.
     apply Mod_le in Eq; lia.
   Qed.
 
-  
-  Lemma Nemo n a b :
+
+  Goal forall n a b,
     irred n -> a < n -> b < n -> n = a * b -> False.
   Proof.
-    intros irred_n ? H ->.
+    intros n a b irred_n ? H ->.
     apply irred_n in H. lia.
     apply Mod_divides. exists a; reflexivity.
   Qed.
 
 
-  Lemma Nemo' n a b :
-    irred n -> 0 < a < n -> 0 < b < n -> Mod n (a * b) = 0 -> False.
-  Proof.
-    intros irred_n [? Ha] [? Hb] [k Hk]%Mod_divides.
-    apply irred_n in Ha. rewrite Ha in *.
-    all: assert (k = 0 \/ k = 1 \/ k > 1) as [ ->|[->|]] by lia; try nia.
-    exfalso. apply (Nemo n a b); auto; lia.
-  Admitted.
-
-
-  Lemma irred_integral_domain' n a b : irred n ->
-    Mod n a <> 0 -> Mod n b <> 0 -> Mod n (a * b) <> 0 .
-  Proof.
-    intros irred_n Ha Hb Eq.
-    rewrite <-ModMod_is_Mod in Ha, Hb.
-    rewrite Mod_mult_hom in Eq.
-    apply (Nemo n (Mod n a) (Mod n b)).
-    apply irred_n.
-    all: try (destruct irred_n; apply Mod_bound; lia).
-    apply Mod_le in Eq.
-  Admitted.
-
-
+  
   Lemma irred_integral_domain n a b : irred n ->
-    Mod n (a * b) = 0 -> Mod n a = 0 \/ Mod n b = 0.
+    Mod n (a*b) = 0 -> Mod n a = 0 \/ Mod n b = 0.
   Proof.
-  Admitted.
+    intros irred_n.
+    induction a as [a Hrec] using lt_rect.
+    intros Eq.
+    assert (n <= a \/ a < n) as [] by lia.
+    - rewrite <-ModMod_is_Mod.
+      apply Hrec. apply Mod_lt. split.
+      enough (n > 1) by lia. apply irred_n.
+      lia. now rewrite <-Mod_mult_hom_l.
+    - assert (a = 0 \/ a > 0) as [-> |] by lia.
+      rewrite Mod0_is_0; auto.
+      edestruct (Hrec (Mod a n)).
+      now apply Mod_bound.
+      3 : right; apply H1.
+      cut (Mod n (n * b) = 0).
+      rewrite (Factor a n) at 2.
+      rewrite Nat.mul_add_distr_r.
+      rewrite Mod_add_hom, <- Nat.mul_assoc, Mod_mult_hom.
+      now rewrite Eq, Nat.mul_0_r, <- Mod_add_hom.
+      rewrite Nat.mul_comm, <-(Nat.add_0_r (_ * _)).
+      now rewrite Mod_plus_multiple, Mod0_is_0.
+      enough (Mod a n = 0) as E.
+      apply irred_n in E. 
+      rewrite E, Nat.mul_1_l in Eq. all: auto.
+      rewrite Mod_id in H1. auto.
+      apply Mod_lt. lia.
+  Qed.
 
 
   Lemma irred_inverses n a : irred n ->
