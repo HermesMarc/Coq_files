@@ -425,7 +425,7 @@ Section PrimeDec.
   Qed.
 
 
-  
+
   Lemma irred_integral_domain n a b : irred n ->
     Mod n (a*b) = 0 -> Mod n a = 0 \/ Mod n b = 0.
   Proof.
@@ -457,10 +457,48 @@ Section PrimeDec.
   Qed.
 
 
-  Lemma irred_inverses n a : irred n ->
-    Mod n a <> 0 -> exists b, Mod n (a * b) = 1.
+
+  Lemma Mod_add_inverses n a :
+    exists b, Mod n (a + b) = 0.
   Proof.
   Admitted.
+
+
+  Lemma irred_mult_inverses n a : irred n ->
+    Mod n a <> 0 -> exists b, Mod n (a * b) = 1.
+  Proof.
+    intros irred_n.
+    induction a as [a Hrec] using lt_rect.
+    intros Eq.
+    assert (n <= a \/ a < n) as [] by lia.
+    - destruct (Hrec (Mod n a)) as [b Hb].
+      apply Mod_lt. split.
+      enough (n > 1) by lia. apply irred_n.
+      lia. now rewrite ModMod_is_Mod.
+      exists b. now rewrite <-Mod_mult_hom_l in Hb.
+    - assert (a = 0 \/ 0 < a) as [-> |] by lia.
+      rewrite Mod0_is_0 in Eq. lia.
+      destruct (eq_dec (Mod a n) 0) as [Ha|Ha].
+      + apply irred_n in Ha. rewrite Ha.
+        exists 1. cbn. rewrite Mod_id.
+        reflexivity. apply irred_n. apply H. 
+      + destruct (Hrec (Mod a n)) as [b Hb].
+        now apply Mod_bound.
+        rewrite Mod_id. apply Ha. apply Mod_lt.
+        split; lia.
+        destruct (Mod_add_inverses n b) as [b' Hb'].
+        exists (Div a n * b'). rewrite Nat.mul_comm.
+        cut (Mod n (n * b' + (Mod a n) * b) = 1).
+        rewrite (Factor a n) at 2.
+        rewrite Nat.mul_add_distr_r, <-Nat.add_assoc, <-Nat.mul_add_distr_l.
+        rewrite Nat.add_comm in Hb'.
+        rewrite Mod_add_hom, (Mod_mult_hom _ _ (_ + _)).
+        rewrite Hb'. rewrite Nat.mul_0_r.
+        rewrite <-Mod_add_hom, Nat.add_0_r.
+        intros <-. f_equal. lia.
+        rewrite Nat.mul_comm.
+        now rewrite Mod_plus_multiple.
+  Qed.
 
 
 
