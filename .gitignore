@@ -2,5 +2,7 @@
 *.lia.cache
 *.code-workspace
 tree_normalizing.v
-Gauss_Sum.v
-Gauss_Sum2.v
+Gauss_Sum*.v
+McCarty.md
+list_homo.v
+.gitignore

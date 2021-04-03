@@ -34,7 +34,7 @@ Defined.
 
 
 Definition Euclid y x :
-  { a & { b &  x = a*y + b  /\  (0 < y -> b < y)  }}.
+  { a & { b &  x = a*y + b  /\  (0 < y <-> b < y)  }}.
 Proof.
   destruct y as [|y].
   exists 0, x. repeat split; lia.
@@ -70,6 +70,15 @@ Proof.
   apply (Mod_bound _ x) in H. lia.
 Qed.
 
+Lemma Div_lt y x : 0 < y <= x -> 0 < Div y x.
+Proof.
+  intros [H1 H2].
+  rewrite (Factor y x) in H2 at 1.
+  apply (Mod_bound _ x) in H1.
+  enough (Div y x <> 0) by lia.
+  intros E. rewrite E in *; cbn in *.
+  lia.
+Qed.
 
 
 Section Uniquness.
@@ -103,6 +112,7 @@ Section Uniquness.
 End Uniquness.
 
 
+Notation "x ∣ y" := ( exists k, x*k = y ) (at level 30).
 
 Lemma Mod_divides y x : Mod y x = 0 <=> { k & x = k*y }.
 Proof.
@@ -231,19 +241,16 @@ Section WitnessOperator.
 End WitnessOperator.
 
 
-Lemma lt_trichotomy x y : {x < y} + {x = y} + {y < x}.
-Proof.
-Admitted.
-
 
 Lemma lt_dec x y : dec (x < y).
 Proof.
-  induction y.
+  induction y in x |-*.
   - right. lia.
-  - destruct IHy.
-    left. lia. right.
-    intros. 
-Admitted.
+  - destruct x.
+    left. lia.
+    destruct (IHy x).
+    left; lia. right; lia.
+Qed.
 
 Lemma eq_dec (x y : nat) : dec (x = y).
 Proof.
@@ -286,12 +293,29 @@ Hint Resolve neg_and neg_imp eq_dec dec_conj dec_disj dec_imp dec_neg : decs.
 
 
 
-Lemma dec_bounded_exist N p : Dec p -> dec (exists x, x < N /\ p x).
+Lemma dec_lt_bounded_exist' N p : Dec p -> (exists x, x < N /\ p x) + (forall x, x < N -> ~ p x).
 Proof.
-Admitted.
+  intros Dec_p. induction N.
+  right. intros []; lia.
+  destruct (IHN) as [IH | IH].
+  - left. destruct IH as [x Hx].
+    exists x. split. lia. apply Hx.
+  - destruct (Dec_p N) as [HN | HN]. 
+    + left. exists N. split. lia. apply HN.
+    + right. intros x Hx.
+      assert (x = N \/ x < N) as [->|] by lia; auto.
+Defined.
 
 
-Lemma dec_bounded_forall N p  : Dec p -> dec (forall x, x < N -> p x).
+Lemma dec_lt_bounded_exist N p : Dec p -> dec (exists x, x < N /\ p x).
+Proof.
+  intros Dec_p.
+  destruct (dec_lt_bounded_exist' N p Dec_p).
+  now left. right. firstorder.
+Defined.
+
+
+Lemma dec_lt_bounded_forall N p  : Dec p -> dec (forall x, x < N -> p x).
 Proof.
   intros Dec_p. induction N.
   left. lia.
@@ -306,7 +330,7 @@ Proof.
 Defined.
 
 
-Lemma neg_bounded_forall N p : Dec p -> (~ forall x, x < N -> p x) -> exists x, x < N /\ ~ p x. 
+Lemma neg_lt_bounded_forall N p : Dec p -> (~ forall x, x < N -> p x) -> exists x, x < N /\ ~ p x. 
 Proof.
   intros Dec_p H.
   induction N. exfalso. apply H; lia.
@@ -353,15 +377,9 @@ Section PrimeDec.
   Lemma dec_irred : Dec(irred).
   Proof.
     intros n. apply dec_conj. apply lt_dec.
-    apply dec_bounded_forall.
+    apply dec_lt_bounded_forall.
     intros x. eauto with decs.
   Defined.
-
-
-
-        Definition F x := if dec_irred x then 1 else 0.
-        
-
 
   Lemma irred1 N : irred N +
     (N > 1 -> {x & x < N /\ Mod x N = 0 /\ x <> 1}).
@@ -372,13 +390,13 @@ Section PrimeDec.
     unfold irred in *.
     apply neg_and in H.
     - destruct H. tauto.
-      apply neg_bounded_forall in H.
+      apply neg_lt_bounded_forall in H.
       destruct H as [n []].
       exists n. split. tauto.
       eauto with decs. intros x. 
       eauto with decs.
     - apply lt_dec.
-    - apply dec_bounded_forall.
+    - apply dec_lt_bounded_forall.
       intros n. apply dec_imp; eauto with decs.
   Defined.
 
@@ -416,15 +434,6 @@ Section PrimeDec.
   Qed.
 
 
-  Goal forall n a b,
-    irred n -> a < n -> b < n -> n = a * b -> False.
-  Proof.
-    intros n a b irred_n ? H ->.
-    apply irred_n in H. lia.
-    apply Mod_divides. exists a; reflexivity.
-  Qed.
-
-
 
   Lemma irred_integral_domain n a b : irred n ->
     Mod n (a*b) = 0 -> Mod n a = 0 \/ Mod n b = 0.
@@ -458,11 +467,16 @@ Section PrimeDec.
 
 
 
-  Lemma Mod_add_inverses n a :
-    exists b, Mod n (a + b) = 0.
+  Lemma Mod_add_inverse m a : { b & Mod m (a + b) = 0 }.
   Proof.
   Admitted.
 
+  Definition minus m x := projT1 (Mod_add_inverse m x).
+
+  Fact add_minus m x : Mod m (x + minus m x) = 0.
+  Proof.
+    apply (projT2 (Mod_add_inverse m x)).
+  Qed.
 
   Lemma irred_mult_inverses n a : irred n ->
     Mod n a <> 0 -> exists b, Mod n (a * b) = 1.
@@ -486,7 +500,7 @@ Section PrimeDec.
         now apply Mod_bound.
         rewrite Mod_id. apply Ha. apply Mod_lt.
         split; lia.
-        destruct (Mod_add_inverses n b) as [b' Hb'].
+        destruct (Mod_add_inverse n b) as [b' Hb'].
         exists (Div a n * b'). rewrite Nat.mul_comm.
         cut (Mod n (n * b' + (Mod a n) * b) = 1).
         rewrite (Factor a n) at 2.
@@ -645,7 +659,7 @@ Section PrimeDecomp.
   Defined.
 
 
-  Definition expo p X := 
+  Definition expo'' p X := 
     match (eq_dec (Mod p X) 0) with
     | left H => (projT1 (exponent p X H))
     | right _ => 0
