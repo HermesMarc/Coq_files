@@ -112,6 +112,7 @@ Section Uniquness.
 End Uniquness.
 
 
+
 Notation "x ∣ y" := ( exists k, x*k = y ) (at level 30).
 
 Lemma Mod_divides y x : Mod y x = 0 <=> { k & x = k*y }.

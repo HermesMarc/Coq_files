@@ -1,27 +1,80 @@
-(* Slightly modified version of the Drinker's Paradox, making it equivalent to XM in the constructive Logic of Coq. *)
+(* Slightly modified version of the Drinker's Paradox, making it equivalent to DN, LEM and similar statements in the constructive Logic of Coq. *)
 
-Definition XM := forall X, X \/ ~X.
+
 Definition Eater := forall X (p : X -> Prop), 
-  X -> exists x : X, (~~p x -> forall x, p x).
+  X -> exists x : X, (~~p x -> forall y, p y).
 
-Lemma DeMorgan {X} {p : X -> Prop} : XM -> ~(forall x : X, p x) -> exists x, ~p x.
-Proof.
-Admitted.
+Definition classical q : Prop := forall P : Prop, ~~ q P.
+Definition tauto (q : Prop -> Prop) := forall P : Prop, q P.
 
-Goal XM -> Eater.
+Lemma Eater_cl q : classical q -> Eater -> tauto q.
 Proof.
-  intros xm X p x.
-  destruct (xm (forall x, p x)) as [|H]; auto.
-  - exists x. tauto.
-  - apply (DeMorgan xm) in H.
-    destruct H as [d ].
-    exists d. tauto.
+  intros Hq eater X.
+  specialize (eater _ q) as [P H]; auto.
 Qed.
 
-Goal Eater -> XM.
-Proof.
-  intros Eater X.
-  specialize (Eater _ (fun x => x \/ ~x) ).
-  destruct Eater as [? H]. auto.
-  apply H; tauto.
-Qed.
+
+
+Section DN.
+
+  Definition stable X := ~~ X -> X.
+  Definition DN := forall X, stable X.
+
+  Goal DN -> Eater.
+  Proof.
+    intros dn X p x.
+    apply dn.
+    intros nH. apply nH.
+    exists x.
+    intros _ y. apply dn.
+    intros ?. apply nH.
+    exists y. tauto.
+  Qed.
+
+  Goal Eater -> DN.
+  Proof.
+    refine (Eater_cl _ _).
+    unfold classical, stable. tauto.
+  Qed.
+
+
+End DN.
+
+
+
+
+Section LEM.
+
+  Definition definite X := X \/ ~X.
+  Definition LEM := forall X, definite X.
+
+
+  Lemma pred_LEM {X} (p : X -> Prop) :
+    LEM -> (forall x, p x) \/ (exists x, ~p x).
+  Proof.
+    intros lem.
+    destruct (lem (exists x, ~p x)) as [| H]; auto.
+    left. intros x.
+    destruct (lem (p x)); auto.
+    exfalso. apply H.
+    now exists x.
+  Qed.
+
+
+  Goal LEM -> Eater.
+  Proof.
+    intros lem X p x.
+    destruct (pred_LEM p lem) as [|H].
+    - exists x. tauto.
+    - destruct H as [d ].
+      now exists d.
+  Qed.
+
+  Goal Eater -> LEM.
+  Proof.
+    refine (Eater_cl _ _).
+    unfold classical, definite. tauto.
+  Qed.
+
+
+End LEM.
