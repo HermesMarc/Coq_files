@@ -281,21 +281,19 @@ Section PrimeDec.
   Lemma prime_or_div' N : 
     prime N + (N > 1 -> {x & x < N /\ Mod x N = 0 /\ x <> 1}).
   Proof.
-    destruct (dec_prime N) as [|H]; auto.
+    destruct (dec_prime N) as [|H%neg_and ]; auto.
     right. intros HN. apply Witness. 
-    - intros x. apply dec_conj; eauto with decs. apply lt_dec.
-    - unfold prime in *.
-      apply neg_and in H.
-    --  destruct H. 
-        + tauto.
-        + apply neg_lt_bounded_forall in H.
-        ++  destruct H as [n []].
-            exists n. split; auto.
-            eauto with decs. 
-        ++  intros x. eauto with decs.
-    --  apply lt_dec.
-    --  apply dec_lt_bounded_forall.
-        intros n. apply dec_imp; eauto with decs.
+    - intros x. apply dec_conj; eauto with decs. 
+      apply lt_dec.
+    - destruct H; try tauto.
+      apply neg_lt_bounded_forall in H.
+      + destruct H as [n []].
+        exists n. split; auto.
+        eauto with decs. 
+      + intros ?. eauto with decs.
+    - apply lt_dec.
+    - apply dec_lt_bounded_forall.
+      intros ?. apply dec_imp; eauto with decs.
   Defined.
 
   Lemma prime_or_div N :
@@ -303,7 +301,7 @@ Section PrimeDec.
   Proof.
     destruct (prime_or_div' N) as [| H]; auto.
     right. intros [x Hx]%H.
-    destruct Hx as (?&[y ->]%Mod_divides&?).
+    destruct Hx as (?& [y ->]%Mod_divides &?).
     exists x. repeat split. 
     - lia.
     - lia.
@@ -332,7 +330,6 @@ Section PrimeDec.
       + auto.
       + exists 1; lia.
     - destruct (H HN) as [q ((H1&H2)&H3)] .
-      (* assert (q > 1) by lia. *)
       destruct (IH q H2 H1) as [k Hk].
       exists k. split. 
       + tauto.
