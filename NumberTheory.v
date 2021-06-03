@@ -382,8 +382,8 @@ Section PrimeDec.
     intros x. eauto with decs.
   Defined.
 
-  Lemma irred1 N : irred N +
-    (N > 1 -> {x & x < N /\ Mod x N = 0 /\ x <> 1}).
+  Lemma irred1 N : 
+    irred N + (N > 1 -> {x & x < N /\ Mod x N = 0 /\ x <> 1}).
   Proof.
     destruct (dec_irred N) as [|H]; auto.
     right. intros HN. apply Witness. 

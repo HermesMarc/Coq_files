@@ -47,7 +47,7 @@ Section LEM.
 
   Definition definite X := X \/ ~X.
   Definition LEM := forall X, definite X.
-
+  
 
   Lemma pred_LEM {X} (p : X -> Prop) :
     LEM -> (forall x, p x) \/ (exists x, ~p x).
