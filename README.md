@@ -6,7 +6,7 @@ Some small projects in Coq I have finished or am still working on.
 
 - [`Nat_listNat.v`](/Nat_listNat.v) proofs that there is a bijection between the type `nat` and the type `list nat`.
 
-- [`option_inj.v`](/option_inj.v) Shows that if `option(X)` and `option(Y)` are in bijection then so are `X` and `Y`. This is then used to show that the definition of finite types with n elements as `option^n(⊥)` is well-behaved. 
+- [`Bij_option.v`](/Bij_option.v) Shows that if `option(X)` and `option(Y)` are in bijection then so are `X` and `Y`. This can then used to show that the definition of finite types with n elements as `option^n(⊥)` is well-behaved.
 
 - [`patties.v`](/patties.v) Contains a formalized solution for a riddle. More details on the riddle can be found in the code.
 

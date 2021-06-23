@@ -2,6 +2,5 @@
 *.lia.cache
 *.code-workspace
 .gitignore
-Temp*
-SE_posts 
+*temp*
 *hide*

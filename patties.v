@@ -99,7 +99,7 @@ Proof.
   apply Nat.lt_0_mul' in Hx. destruct Hx.
   enough (k * y + 0 = l * y + z) as G%Fac_unique; destruct k; lia.
 Qed.
-  
+
 
 Lemma complete_ind (P : nat -> Type) :
   (forall x, (forall y, y < x -> P y) -> P x) -> forall x, P x.
@@ -196,7 +196,7 @@ Section Riddle.
     exists p : player, Winner N p = Me.
   Proof.
     destruct (nat_eqdec (M 6 N) O);
-    (exists Caryn + exists Me); now apply WinChoice.
+    [exists Caryn | exists Me]; now apply WinChoice.
   Qed.
   
   

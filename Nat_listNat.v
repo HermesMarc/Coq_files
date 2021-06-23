@@ -1,6 +1,5 @@
 Require Import Arith Lists.List.
 
-
 Definition injective {X Y} (f : X -> Y) :=
   forall x x', f x = f x' -> x = x'.
 
@@ -27,7 +26,7 @@ Section Bijection.
     | x::l => S (code (x, g l))
     end.
 
-  (* We first show that g is injective + surjective and then use these results to define and verify its inverse function. *)
+  (* We first show that g is injective + surjective and then use these results to extract its inverse function. *)
 
   Fact inj_code : injective code.
   Proof.
@@ -58,7 +57,7 @@ Section Bijection.
       exists (x::l); reflexivity.
   Defined.
 
-  (* Now we can define the inverse for g *)
+  (* From the previous result we can extract the inverse of g *)
   Definition f n := projT1 (surj_g n).  
 
 
