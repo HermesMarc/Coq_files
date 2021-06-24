@@ -50,11 +50,11 @@ Qed.
 Definition extract {A B} h := forall x : A, Sigma y : B, h (Some x) = Some y.
 
 Lemma inv_extract (F : extract f) (G : extract g) : 
-  inv g f -> inv (fun y => projT1 (G y)) (fun x => projT1 (F x)).
+  inv g f -> inv (fun y => p1 (G y)) (fun x => p1 (F x)).
 Proof.
   intros gf x.
   destruct (F x) as [y ]; cbn.
-  destruct (G y) as [x' ]; cbn.
+  destruct (G y) as []; cbn.
   congruence.
 Qed.
 
@@ -79,26 +79,26 @@ End Lemmas.
 
 Arguments extract_rewire {X Y f g}.
 
-Lemma bij_option X Y :
+Lemma Bij_option X Y :
   Bij (option X) (option Y) -> Bij X Y.
 Proof.
   intros [F G FG GF].
   specialize (extract_rewire GF) as f.
   specialize (extract_rewire FG) as g.
-  exists (fun x => projT1 (f x)) (fun y => projT1 (g y)).
+  exists (fun x => p1 (f x)) (fun y => p1 (g y)).
   - apply inv_extract, inv_rewire, FG.
   - apply inv_extract, inv_rewire, GF.
 Qed.
 
 
 
-(* Proof due to Yannick Forster and Andrej Dudenhefner; making use of and illustrating how to handle dependant typing *)
+(* Proof due to Yannick Forster and Andrej Dudenhefner; making use of and illustrating how to handle dependant typing. *)
 
 Lemma no_confusion {X} {Y} {f : option X -> option Y} {g} :
   inv g f -> forall x, f (Some x) <> f None.
 Proof. congruence. Qed.
 
-Definition R {X} {Y} (f : option X -> option Y) g :
+Definition rewire' {X} {Y} (f : option X -> option Y) g :
   inv g f -> X -> Y :=
     fun (H : inv g f) (x : X) =>
   match (f (Some x)) as oy return (oy <> f None -> Y) with
@@ -110,11 +110,11 @@ Definition R {X} {Y} (f : option X -> option Y) g :
     end Hf
   end (no_confusion H x).
 
-Lemma elim_R {X Y : Type} (f : option X -> option Y) g H x {p : Y -> Prop} : 
+Lemma elim_rewire' {X Y : Type} (f : option X -> option Y) g H x {p : Y -> Prop} : 
   (forall y, f (Some x) = Some y -> p y) ->
-  (forall y', f (Some x) = None -> f None = Some y' -> p y') -> p (R f g H x).
+  (forall y', f (Some x) = None -> f None = Some y' -> p y') -> p (rewire' f g H x).
 Proof.
-  intros H1 H2. unfold R. generalize (no_confusion H x).
+  intros H1 H2. unfold rewire'. generalize (no_confusion H x).
   intros Hf.
   destruct (f (Some x)).
   - now apply H1.
@@ -125,44 +125,59 @@ Qed.
 
 Lemma spec {X} {Y} (f : option X -> option Y) g :
   forall (H1 : inv g f) (H2 : inv f g),
-  inv (R f g H1) (R g f H2).
+  inv (rewire' f g H1) (rewire' g f H2).
 Proof.
   intros H1 H2 y.
-  pattern (R g f H2 y). apply elim_R.
+  pattern (rewire' g f H2 y). apply elim_rewire'.
   - intros x Hx.
-    pattern (R f g H1 x). apply elim_R.
-    + intros y' Hy'. congruence.
-    + intros y' Hy'. congruence.
+    pattern (rewire' f g H1 x). apply elim_rewire'.
+    + intros. congruence.
+    + intros. congruence.
   - intros x Hx.
-    pattern (R f g H1 x). apply elim_R.
-    + intros y' Hy'. congruence.
-    + intros y' Hy'. congruence.
+    pattern (rewire' f g H1 x). apply elim_rewire'.
+    + intros. congruence.
+    + intros. congruence.
+Qed.
+
+Goal forall X Y, Bij (option X) (option Y) -> Bij X Y.
+Proof.
+  intros X Y [].
+  eexists; apply spec.
+  Unshelve. all: eassumption.
 Qed.
 
 
 
-(* This final and most succint proof was later devised by Prof. Gert Smolka *)
+(* The final and most succint proof was later devised by Prof. Gert Smolka. It makes the informative sigma type more informative, leading to a much shorter proof *)
 
-Fact Rewire {X Y f g} :
-  @inv (option X) (option Y) g f ->
-  forall x, Sigma y, match f (Some x) with Some y' => y = y' | None => f None = Some y end.
+Lemma Rewire X Y (f : option X -> option Y) g :
+  inv g f -> forall x, Sigma y,
+    match f (Some x) with Some y' => y = y' | None => f None = Some y end.
 Proof.
-  intros H x.
-  destruct (f (Some x)) as [y|] eqn:E1.
-  - exists y. reflexivity.
-  - destruct (f None) as [y|] eqn:E2.
-    + exists y. reflexivity.
+  intros gf x.
+  destruct (f (Some x)) as [y|] eqn:?.
+  - now exists y.
+  - destruct (f None) as [y|] eqn:?.
+    + now exists y.
     + exfalso. congruence.
 Qed.
+Arguments Rewire {_ _ _ _}.
 
-Fact Rewire_inv {X Y} (f : option X -> option Y) g :
-  forall (H1: inv g f) (H2: inv f g),
-    inv (fun y => p1 (Rewire H2 y)) (fun x => p1 (Rewire H1 x)).
+Lemma Rewire_inv {X Y} (f : option X -> option Y) g :
+  forall (fg : inv f g) (gf : inv g f),
+    inv (fun y => p1 (Rewire fg y)) (fun x => p1 (Rewire gf x)).
 Proof.
-  intros H1 H2 x.
-  destruct (Rewire H1 x) as [y H3]; cbn.
-  destruct (Rewire H2 y) as [x' H4]; cbn.
-  destruct (f (Some x)) as [y1|] eqn:E3;
-    destruct (g (Some y)) as [x1|] eqn:E1;
+  intros fg gf x.
+  destruct (Rewire gf x) as [y ]; cbn.
+  destruct (Rewire fg y) as []; cbn.
+  destruct (f (Some x)) as [|] eqn:?;
+    destruct (g (Some y)) as [|] eqn:?;
     congruence.
+Qed.
+
+Goal forall X Y, Bij (option X) (option Y) -> Bij X Y.
+Proof.
+  intros X Y [].
+  eexists; apply Rewire_inv.
+  Unshelve. all: eassumption.
 Qed.
