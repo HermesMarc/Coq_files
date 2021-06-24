@@ -1,6 +1,6 @@
 (* 
 
-This documents presents 3 different proofs (in the order they were conceived) of the fact that if option X and option Y are in bijection, then so are X and Y.  
+This documents presents 3 different proofs (in the order they were conceived) of the fact that if option(X) and option(Y) are in bijection, then so are X and Y.  
 
 *)
 
