@@ -47,7 +47,7 @@ Proof.
     + congruence.
 Qed.
 
-Definition extract {A B} h := forall x : A, Sigma y : B, h (Some x) = Some y.
+Definition extract {A B} h := forall a : A, Sigma b : B, h (Some a) = Some b.
 
 Lemma inv_extract (F : extract f) (G : extract g) : 
   inv g f -> inv (fun y => p1 (G y)) (fun x => p1 (F x)).
@@ -150,12 +150,11 @@ Qed.
 
 (* The final and most succint proof was later devised by Prof. Gert Smolka. It makes the informative sigma type more informative, leading to a much shorter proof *)
 
-Lemma Rewire X Y (f : option X -> option Y) g :
-  inv g f -> forall x, Sigma y,
+Lemma Rewire X Y f g (gf : inv g f) :
+  forall x : X, Sigma y : Y,
     match f (Some x) with Some y' => y = y' | None => f None = Some y end.
 Proof.
-  intros gf x.
-  destruct (f (Some x)) as [y|] eqn:?.
+  intros x; destruct (f (Some x)) as [y|] eqn:?.
   - now exists y.
   - destruct (f None) as [y|] eqn:?.
     + now exists y.
