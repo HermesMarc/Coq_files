@@ -34,7 +34,7 @@ Section Minimal.
   | DE  A phi psi theta : A ⊢ phi ∨ psi -> phi::A ⊢ theta -> psi::A ⊢ theta -> A ⊢ theta
   where "A ⊢ phi" := (prv A phi).
 
-  
+
   Lemma Weak A B phi :
     A ⊢ phi -> A <<= B -> B ⊢ phi.
   Proof.
@@ -42,7 +42,7 @@ Section Minimal.
     induction H; intros B HB; try unshelve (solve [econstructor; intuition]); try now econstructor.
   Qed.
 
-    
+
   Fact Imp A s t :
     A ⊢ s --> t <=> s::A ⊢ t.
   Proof.
@@ -52,13 +52,13 @@ Section Minimal.
     - apply II.
   Qed.
 
-  
-  
+
+
   (* Fix some propositional variable F *)
   Variable F : prop.
 
-  Definition Contradiction := forall A B, nil ⊢ A --> (F --> A) --> B.
-  Definition Explosion := forall A, nil ⊢ F --> A. 
+  Definition Contradiction := forall A B, nil ⊢ A --> (A --> F) --> B.
+  Definition Explosion := forall A, nil ⊢ F --> A.
   Definition LEM := forall A, nil ⊢ A ∨ (A --> F).
   Definition DN := forall A, nil ⊢ ((A --> F) --> F) --> A.
   Definition CP := forall A B, nil ⊢ ((B --> F) --> (A --> F)) --> A --> B.
@@ -71,8 +71,8 @@ Section Minimal.
     intros cp. apply IE. eapply Weak.
     apply (cp X Y). firstorder.
   Qed.
-  
-  
+
+
   Goal DN <=> CP.
   Proof.
     split.
@@ -88,7 +88,7 @@ Section Minimal.
       apply Ctx; firstorder.
   Qed.
 
-  
+
   Goal DN -> Explosion.
   Proof.
     intros dn A.
@@ -97,7 +97,7 @@ Section Minimal.
     eapply IE. apply Ctx; firstorder.
     apply II, Ctx; firstorder.
   Qed.
-  
+
 
   Goal CP -> Peirce.
   Proof.
@@ -106,8 +106,8 @@ Section Minimal.
     eapply IE. apply Ctx; firstorder.
     apply (CP' cp). apply II, Ctx. firstorder.
   Qed.
-    
-  
+
+
   Goal Peirce -> LEM.
   Proof.
     intros peirce X.

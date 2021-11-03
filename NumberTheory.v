@@ -1,13 +1,11 @@
 Require Import Equations.Equations.
 Require Import Arith Lia.
-
+Load WitnessOp.
 
 Definition iffT (X Y : Type) : Type := (X -> Y) * (Y -> X).
 Notation "X <=> Y" := (iffT X Y) (at level 95, no associativity).
 
 
-Definition dec (P : Prop) := {P} + {~P}.
-Definition Dec {X} p := forall x : X, dec(p x).
 
 Lemma dec_transport {X} p q :
   Dec p -> (forall x : X, p x <-> q x) -> Dec q.
@@ -203,46 +201,6 @@ Section Homomorphism.
 End Homomorphism.
 
 
-
-Section WitnessOperator.
-
-  Variable q : nat -> Prop.
-  Variable Dec_q : Dec q.
-
-  Inductive T n : Prop :=
-    C : (~ q n -> T (S n)) -> T n.
-
-
-  Lemma grounded n : T n -> T 0.
-  Proof.
-    induction n; auto.
-    intros. apply IHn. now constructor.
-  Defined.
-
-  Lemma qT n : q n -> T n.
-  Proof.
-    intros. now constructor.
-  Defined.
-
-  Lemma preWitness : forall n, T n -> {x & q x}.
-  Proof.
-    apply T_rect.
-    intros n _ H. destruct (Dec_q n).
-    now exists n. now apply H.
-  Defined.
-
-  Theorem Witness : (exists x, q x) -> {x & q x}.
-  Proof.
-    intros H. apply (preWitness 0).
-    destruct H as [n H]. destruct (Dec_q n).
-    - eapply grounded, qT, H.
-    - tauto.
-  Defined.
-
-End WitnessOperator.
-
-
-
 Lemma lt_dec x y : dec (x < y).
 Proof.
   induction y in x |-*.
@@ -371,7 +329,7 @@ Section PrimeDec.
   Proof.
     unfold irred, irred'.
     setoid_rewrite <-irred_bounded.
-    intuition. destruct (H1 _ H H2).
+    intuition. destruct (H3 _ H H4).
     auto. lia.
   Qed.
 
@@ -386,7 +344,7 @@ Section PrimeDec.
     irred N + (N > 1 -> {x & x < N /\ Mod x N = 0 /\ x <> 1}).
   Proof.
     destruct (dec_irred N) as [|H]; auto.
-    right. intros HN. apply Witness. 
+    right. intros HN. apply WO.Witness. 
     intros x. apply dec_conj; eauto with decs. apply lt_dec.
     unfold irred in *.
     apply neg_and in H.
@@ -451,7 +409,7 @@ Section PrimeDec.
       rewrite Mod0_is_0; auto.
       edestruct (Hrec (Mod a n)).
       now apply Mod_bound.
-      3 : right; apply H1.
+      3 : now right.
       cut (Mod n (n * b) = 0).
       rewrite (Factor a n) at 2.
       rewrite Nat.mul_add_distr_r.
@@ -462,7 +420,7 @@ Section PrimeDec.
       enough (Mod a n = 0) as E.
       apply irred_n in E. 
       rewrite E, Nat.mul_1_l in Eq. all: auto.
-      rewrite Mod_id in H1. auto.
+      rewrite Mod_id in H3. auto.
       apply Mod_lt. lia.
   Qed.
 
@@ -582,15 +540,15 @@ Section PrimeInf.
   Goal forall N, exists p, N < p /\ irred p.
   Proof.
     intros n.
-    destruct (irred_factor (n! + 1)) as [k [[] ]].
+    destruct (irred_factor (n! + 1)) as [k [[H1 H2] H3]].
     specialize(fac1 n). lia.
     exists k. split.
     - rewrite Mod_add_hom in *.
       assert (n < k <-> ~ (k <= n)) as G by lia.
       apply G. intros ?.
       enough (1 = 0) by lia.
-      rewrite <-H1 at 2.
-      rewrite fac3. 2: lia. 
+      rewrite <-H3 at 2.
+      rewrite fac3. 2: lia.
       cbn; rewrite ModMod_is_Mod.
       symmetry. refine ( proj2 (Fac_eq _ 0 _ _)); lia.
     - unfold irred. tauto.

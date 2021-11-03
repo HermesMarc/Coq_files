@@ -2,7 +2,7 @@
 
 
 Definition Eater := forall X (p : X -> Prop), 
-  X -> exists x : X, (~~p x -> forall y, p y).
+  forall a : X, exists x, (~~p x -> forall y, p y).
 
 Definition classical q : Prop := forall P : Prop, ~~ q P.
 Definition tauto (q : Prop -> Prop) := forall P : Prop, q P.
@@ -12,7 +12,6 @@ Proof.
   intros Hq eater X.
   specialize (eater _ q) as [P H]; auto.
 Qed.
-
 
 
 Section DN.
@@ -37,7 +36,6 @@ Section DN.
     unfold classical, stable. tauto.
   Qed.
 
-
 End DN.
 
 
@@ -47,7 +45,6 @@ Section LEM.
 
   Definition definite X := X \/ ~X.
   Definition LEM := forall X, definite X.
-  
 
   Lemma pred_LEM {X} (p : X -> Prop) :
     LEM -> (forall x, p x) \/ (exists x, ~p x).
@@ -59,7 +56,6 @@ Section LEM.
     exfalso. apply H.
     now exists x.
   Qed.
-
 
   Goal LEM -> Eater.
   Proof.
@@ -75,6 +71,5 @@ Section LEM.
     refine (Eater_cl _ _).
     unfold classical, definite. tauto.
   Qed.
-
 
 End LEM.

@@ -47,7 +47,8 @@ Proof.
     + congruence.
 Qed.
 
-Definition extract {A B} h := forall a : A, Sigma b : B, h (Some a) = Some b.
+Definition extract {A B} h := 
+  forall a : A, Sigma b : B, h (Some a) = Some b.
 
 Lemma inv_extract (F : extract f) (G : extract g) : 
   inv g f -> inv (fun y => p1 (G y)) (fun x => p1 (F x)).
@@ -61,8 +62,7 @@ Qed.
 Lemma extraction (F : option X -> option Y) :
   (forall ox, F ox = None -> ox = None) -> extract F.
 Proof.
-  intros H x.
-  destruct (F (Some x)) as [y|] eqn:H_some.
+  intros H x; destruct (F (Some x)) as [y|] eqn:H_some.
   - exists y. reflexivity.
   - apply H in H_some. discriminate.
 Qed.
@@ -114,8 +114,8 @@ Lemma elim_rewire' {X Y : Type} (f : option X -> option Y) g H x {p : Y -> Prop}
   (forall y, f (Some x) = Some y -> p y) ->
   (forall y', f (Some x) = None -> f None = Some y' -> p y') -> p (rewire' f g H x).
 Proof.
-  intros H1 H2. unfold rewire'. generalize (no_confusion H x).
-  intros Hf.
+  intros H1 H2. unfold rewire'. 
+  generalize (no_confusion H x). intros Hf.
   destruct (f (Some x)).
   - now apply H1.
   - destruct (f None).
@@ -148,7 +148,7 @@ Qed.
 
 
 
-(* The final and most succint proof was later devised by Prof. Gert Smolka. It makes the informative sigma type more informative, leading to a much shorter proof *)
+(* The final and most succint proof was later devised by Prof. Gert Smolka *)
 
 Lemma Rewire X Y f g (gf : inv g f) :
   forall x : X, Sigma y : Y,
