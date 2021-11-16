@@ -1,4 +1,4 @@
-Definition dec (P : Prop) := {P} + {~P}.
+Definition dec (P : Prop) := sum P (P -> False).
 Definition Dec {X} p := forall x : X, dec(p x).
 
 Module WO.
@@ -47,7 +47,8 @@ Section Exmpl.
   (* Show that x > 10 is decidable *)
   Lemma H1 : Dec (fun x => x > 12).
   Proof.
-    intros x. apply Compare_dec.lt_dec.
+    intros x; unfold dec.
+    destruct (Compare_dec.lt_dec 12 x); auto.
   Defined. 
 
   (* Proof the proposition that there is a number bigger then 10. Here we use 42 for x. *)
@@ -57,5 +58,36 @@ Section Exmpl.
   Defined.
 
   (* Compute the computational witness that the witness operator now gets, given the proof H2 *)
-  (* Compute projT1 (WO.Witness _ H1 H2). *)
+  (*
+
+  Compute projT1 (WO.Witness _ H1 H2). 
+
+  *)
 End Exmpl.
+
+
+
+Section Enum.
+
+Definition Enum X := 
+  { g & forall x : X, exists n : nat, g n = Some x}.
+Definition WO X :=
+  forall p : X -> Prop, Dec p -> ex p -> sig p.
+Definition WO_nat := WO.Witness.
+
+
+Lemma Enum_WO X : Enum X -> WO X.
+Proof.
+  intros [g Hg] p D H.
+  unshelve refine(
+  match
+    WO_nat (fun n => match g n with Some x => p x | None => False end) _ _ 
+  with existT _ n _ => _ end ).
+  - intros n. destruct (g n); [apply D|right; auto].
+  - destruct H as [x Hx].
+    destruct (Hg x) as [n Hn].
+    exists n. now rewrite Hn.
+  - destruct (g n); [eauto|tauto].
+Qed.
+
+End Enum.

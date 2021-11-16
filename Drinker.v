@@ -30,6 +30,7 @@ Section DN.
     exists y. tauto.
   Qed.
 
+
   Goal Eater -> DN.
   Proof.
     refine (Eater_cl _ _).
