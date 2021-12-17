@@ -1,91 +1,111 @@
+Load Preamble.
 
-Definition repr {I X Y} f (i : I) (g : X -> Y) :=
-  forall x : X, (f i) x = g x.
+(* Here is the most common formulation of Lawvere's Fixpoint theorem:
+  If there is a surjection X -> X -> Y, then every function Y -> Y has a fixpoint. *)
+Section Lawvere.
+  Variables X Y : Type.
+  Implicit Type g : Y -> Y.
+  Implicit Type f : X -> X -> Y.
 
-Definition ext_representable {I X Y} (g : X -> Y) f :=
-  exists i : I, repr f i g.
+  Fact Lawvere_surj f :
+    surj f -> forall g, exists y, g y = y.
+  Proof.
+    intros Surj g.
+    destruct (Surj (fun x => g (f x x))) as [a Ha].
+    exists (f a a). pattern (f a) at 2.
+    now rewrite Ha.
+  Qed.
+End Lawvere.
 
-(* Remark 2.2 on nLab: Lawvere pointed out that surjectivity up to functional extensionality (he calls it weak surj.) is enough to show the fixpoint theorem *)
-Definition ext_surj {I X Y} f :=
-  forall g, @ext_representable I X Y g f.
 
-Definition surj {X Y} f := 
-  forall y : Y, exists x : X, f x = y.
+(* 
+  Remark (2.2) on nLab: Lawvere remarks that surjectivity up to functional extensionality (he calls it weak surj.) is enough to show the fixpoint theorem.
 
+  We additionally want to note that we can generalize from the function type Y -> Y to relations Y -> Y -> Prop. This turns the fixpoint-theorem into a theorem showing the existence of a reflexive element.
+*)
+Section repr.
+  Variables I X Y : Type.
+  Implicit Type g : X -> Y -> Prop.
 
-Fact surj_to_extsurj {I X Y : Type} f : surj f -> @ext_surj I X Y f.
-Proof.
-  intros H g.
-  destruct (H g) as [i <-].
-  now exists i.
-Qed.
+  Definition repr f (i : I) g := 
+    forall x : X, g x ((f i) x).
+
+  Definition ext_representable f g :=
+    exists i : I, repr f i g.
+
+  Definition ext_surj f :=
+    forall g, ext_representable f g.
+End repr.
+Arguments repr {_ _ _}.
+Arguments ext_representable {_ _ _}.
+Arguments ext_surj {_ _ _}.
 
 
 Section Lawvere.
 
 Variables X Y : Type.
-Implicit Type g : Y -> Y.
+Implicit Type R : Y -> Y -> Prop.
 Implicit Type f : X -> X -> Y.
 
-Definition diag g f := fun x => g (f x x).
+Definition diag R f := fun x => R (f x x).
 
-(* If we are interested in a fixpoint for one particular function g, we only need a representation (up to func-ext) of g (f x x) *)
-
-Fact diag_fix g f :
-  forall a, repr f a (diag g f) -> f a a = g (f a a).
+(* If we are interested in a reflexive point for one particular relation R, we only need a representation (up to extensionality) of R (f x x) *)
+Fact diag_refl R f :
+  forall a, repr f a (diag R f) -> R (f a a) (f a a).
 Proof.
   refine (fun a H => H a).
 Qed.
 
 
-Fact Lawvere g f :
-  ext_representable (diag g f) f  -> exists y, g y = y.
+Fact Lawvere_diag R f :
+  ext_representable f (diag R f) -> exists y, R y y.
 Proof.
-  unfold diag. intros [a ]. now exists (f a a).
+  intros [a ?%diag_refl]. now exists (f a a).
 Qed.
 
 
-Fact Lawvere_ext_surj f :
-    ext_surj f -> forall g, exists y, g y = y.
+Fact Lawvere f :
+  ext_surj f -> forall R, exists y, R y y.
 Proof.
-  intros Hf g. apply (Lawvere g f), Hf.
+  intros Hf R. apply (Lawvere_diag R f), Hf.
 Qed.
 
 
-Fact Lawvere_surj f :
-    surj f -> forall g, exists y, g y = y.
-Proof.
-  intros Hf%surj_to_extsurj.
-  now eapply Lawvere_ext_surj.
-Qed.
-
-
-Fact CP_Lawvere_surj :
-    (exists g, forall y, g y <> y) -> 
-    forall f, ~ surj f.
+Fact CP_Lawvere :
+  (exists R, forall y, ~ R y y) -> forall f, ~ ext_surj f.
 Proof.
   intros [g Hg] f Hf.
-  destruct (Lawvere_surj f Hf g) as [y ].
+  destruct (Lawvere f Hf g) as [y ].
   now apply (Hg y).
 Qed.
 
 End Lawvere.
 
 
-Definition Pow X := X -> bool.
 
+Definition Pow X := X -> bool.
 Example Cantor X :
-  ~ exists f : X -> Pow X, surj f.
+  forall f : X -> Pow X, ~ ext_surj f.
 Proof.
-  intros [f Hf].
-  refine (CP_Lawvere_surj _ _ _ f Hf).
-  exists negb. now intros [].
+  intros f.
+  eapply CP_Lawvere.
+  exists (fun x y => y = negb x).
+  now intros [].
+Qed.
+
+Definition Preds X := X -> Prop.
+Example Cantor2 X :
+  forall f : X -> Preds X, ~ ext_surj f.
+Proof.
+  intros f.
+  eapply CP_Lawvere.
+  exists (fun x y => (x <-> ~ y)).
+  tauto.
 Qed.
 
 Example Negation X :
   ~ exists f : X -> (X -> False), surj f.
 Proof.
   intros [f Hf].
-  refine (CP_Lawvere_surj _ _ _ f Hf).
-  exists (fun F => F). now intros [].
+  now destruct (Lawvere_surj _ _ _ Hf (fun F => F)) as [[] ].
 Qed.
