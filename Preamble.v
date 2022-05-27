@@ -39,3 +39,7 @@ Lemma Skolem {X Y} (R : X -> Y -> Prop) :
 Proof.
   intros H. unshelve eexists; intros x; cbn; now destruct (H x) as [y ].
 Qed.
+
+Fact DN {A : Prop} : A -> ~~A. tauto. Qed.
+Fact DN_chaining {A B : Prop} : ~~A -> ~~(A -> B) -> ~~B. tauto. Qed.
+Fact DN_remove {A B} : ~~A -> (A -> ~B) -> ~B. tauto. Qed.

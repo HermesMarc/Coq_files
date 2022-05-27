@@ -29,18 +29,17 @@ Proof.
     exists (Some a). apply H.
 Qed.
 
-(*  Proof of the Pigeonhole principle
-*)
+Definition Spec {X Y} (f : option X -> option Y) x r_x :=
+  match f None, f(Some x) with
+  | None    , _       => f(Some x) = Some r_x
+  | Some y0 , None    => r_x = y0
+  | Some y0 , Some y  => r_x <> y0 /\ r_x = y
+  end.
+
 Definition R {X Y} (f : option X -> option Y) :
-  (forall x, f(Some x) <> f None) ->
-  forall x, { r_x &
-    match f None, f(Some x) with
-    | None    , _       => f(Some x) = Some r_x
-    | Some y0 , None    => r_x = y0
-    | Some y0 , Some y  => r_x <> y0 /\ r_x = y
-    end}.
+  (forall x, f(Some x) <> f None) -> forall x, { r_x & Spec f x r_x}.
 Proof.
-  intros H x.
+  unfold Spec; intros H x.
   destruct  (f None) as [y0|] eqn:?, 
             (f (Some x)) as [y|] eqn:?.
   - exists y. split; congruence.
@@ -60,7 +59,7 @@ Proof.
   rewrite <-e.
   generalize (projT1 (R f H x)) as z; fold fin.
   intros ?. clear e; cbn in *. pattern (f None).
-  destruct (f None) as [y0|].
+  unfold Spec; destruct (f None) as [y0|].
   2: congruence.
   destruct  (f (Some x)) as [y|], 
             (f (Some x')) as [y'|].
@@ -76,12 +75,12 @@ Proof.
   revert M f. induction N.
   {intros [] f; [lia | destruct (f None)]. }
   intros [|M] f H_NM; try lia.
-  destruct (fin_dec (fun x => f (Some x) = f None)) as [h|h].
+  destruct (fin_dec (fun x => f (Some x) = f None)) as [H|H].
   { intros ?; apply EQ_fin. }
-  - destruct (IHN _ (r f h) ltac:(lia)) as (x & x' & ne & e).
+  - destruct (IHN _ (r f H) ltac:(lia)) as (x & x' & ne & e).
     exists (Some x), (Some x').
     split; try congruence.
     eapply r_agree; eauto.
-  - destruct h as [x Hx]. exists (Some x), None.
+  - destruct H as [x Hx]. exists (Some x), None.
     split; congruence.
 Qed.
