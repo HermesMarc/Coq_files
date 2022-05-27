@@ -78,10 +78,28 @@ Proof.
   intros [|M] f H_NM; try lia.
   destruct (dec_exists (fun x => f (Some x) = f None)) as [H|H].
   { intros ?; apply EQ_fin. }
-  - destruct H as [x Hx]. exists (Some x), None.
+  - destruct H as [x ]. exists (Some x), None.
     split; congruence.
   - destruct (IHN _ (r f H) ltac:(lia)) as (x & x'&[]).
     exists (Some x), (Some x').
     split; try congruence.
     eapply r_agree; eauto.
+Qed.
+
+Definition injective {X Y} (f : X -> Y) := (forall a b, f a = f b -> a = b).
+Lemma inj_leq M N (f : fin M -> fin N) :
+  injective f -> M <= N.
+Proof.
+  revert M f. induction N.
+  {intros [] f; [lia | destruct (f None)]. }
+  intros [|M] f Inj; try lia.
+  destruct (dec_exists (fun x => f (Some x) = f None)) as [H|H].
+  { intros ?; apply EQ_fin. }
+  - destruct H as [x [=]%Inj].
+  - enough (M <= N) by lia.
+    apply (IHN _ (r f H)).
+    intros x x' E. destruct (EQ_fin _ x x').
+    * congruence.
+    * enough (Some x = Some x') by congruence.
+      eapply Inj, r_agree; eauto.
 Qed.
