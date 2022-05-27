@@ -55,17 +55,18 @@ Definition r_spec {X Y} (f : option X -> option Y) H x := projT2 (R f H x).
 Lemma r_agree {X Y} (f : option X -> option Y) H x x' :
   x <> x' -> r f H x = r f H x' -> f(Some x) = f(Some x').
 Proof.
-  intros ne e.
+  unfold r; intros ne e.
   generalize (r_spec f H x), (r_spec f H x').
-  unfold r in e. rewrite <-e.
+  rewrite <-e.
   generalize (projT1 (R f H x)) as z; fold fin.
   intros ?. clear e; cbn in *. pattern (f None).
-  destruct (f None) as [y0|] eqn:f0.
+  destruct (f None) as [y0|].
   2: congruence.
-  destruct  (f (Some x)) as [y|], (f (Some x')) as [y'|].
-  * now intros [? <-][? <-].
-  * intros [? <-] ->. exfalso. congruence.
-  * intros -> [? <-]. exfalso. congruence.
+  destruct  (f (Some x)) as [y|], 
+            (f (Some x')) as [y'|].
+  * intros [][]; subst; congruence.
+  * intros [] ?; subst; congruence.
+  * intros ? []; subst; congruence.
   * congruence.
 Qed.
 
@@ -78,7 +79,7 @@ Proof.
   destruct (fin_dec (fun x => f (Some x) = f None)) as [h|h].
   { intros ?; apply EQ_fin. }
   - destruct (IHN _ (r f h) ltac:(lia)) as (x & x' & ne & e).
-    exists (Some x), (Some x'). 
+    exists (Some x), (Some x').
     split; try congruence.
     eapply r_agree; eauto.
   - destruct h as [x Hx]. exists (Some x), None.
