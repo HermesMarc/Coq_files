@@ -58,10 +58,9 @@ Proof.
   unfold r; intros ne e.
   generalize (r_spec f H x), (r_spec f H x').
   rewrite <-e.
-  generalize (projT1 (R f H x)) as z; fold fin.
-  intros ?. clear e; cbn in *. pattern (f None).
-  unfold Spec; destruct (f None) as [y0|].
-  2: congruence.
+  generalize (projT1 (R f H x)) as z.
+  intros ?. clear e; unfold Spec.
+  destruct (f None) as [y0|]. 2: congruence.
   destruct  (f (Some x)) as [y|],
             (f (Some x')) as [y'|].
   * intros [][]; subst; congruence.
@@ -96,10 +95,8 @@ Proof.
   destruct (dec_exists (fun x => f (Some x) = f None)) as [H|H].
   { intros ?; apply EQ_fin. }
   - destruct H as [x [=]%Inj].
-  - enough (M <= N) by lia.
-    apply (IHN _ (r f H)).
-    intros x x' E. destruct (EQ_fin _ x x').
-    * congruence.
-    * enough (Some x = Some x') by congruence.
-      eapply Inj, r_agree; eauto.
+  - enough (M <= N) by lia. apply (IHN _ (r f H)).
+    intros x x' E. destruct (EQ_fin _ x x'); auto.
+    enough (Some x = Some x') by congruence.
+    eapply Inj, r_agree; eauto.
 Qed.
