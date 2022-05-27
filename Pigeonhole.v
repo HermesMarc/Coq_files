@@ -77,7 +77,7 @@ Proof.
   intros [|M] f H_NM; try lia.
   destruct (fin_dec (fun x => f (Some x) = f None)) as [H|H].
   { intros ?; apply EQ_fin. }
-  - destruct (IHN _ (r f H) ltac:(lia)) as (x & x' & ne & e).
+  - destruct (IHN _ (r f H) ltac:(lia)) as (x & x'&[]).
     exists (Some x), (Some x').
     split; try congruence.
     eapply r_agree; eauto.
