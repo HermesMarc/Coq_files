@@ -13,20 +13,20 @@ Fact EQ_option X :
 Proof. intros H [x|][y|]; decide equality. Qed.
 
 Fact EQ_fin n : EQ (fin n).
-Proof. induction n. {intros []. }  now apply EQ_option. Qed.
+Proof. induction n. {intros []. } now apply EQ_option. Qed.
 
-Fact fin_dec {n} (p: fin n -> Prop) :
-  (forall x, dec (p x)) -> (forall x, ~p x) + (exists x, p x).
+Fact dec_exists {n} (p: fin n -> Prop) :
+  (forall x, dec (p x)) -> (exists x, p x) + (forall x, ~p x).
 Proof.
   intros Hdec. induction n as [|n IH].
-  {left; intros []. }
+  {right; intros []. }
   specialize (IH (fun a => p (Some a))) as [IH|IH].
   { intros ?; apply Hdec. }
-  - destruct (Hdec None) as [H|H].
-    * right. exists None. apply H.
-    * left. intros [a|]. exact (IH a). exact H.
-  - right. destruct IH as [a H].
+  - left. destruct IH as [a H].
     exists (Some a). apply H.
+  - destruct (Hdec None) as [H|H].
+    * left. exists None. apply H.
+    * right. intros [a|]. exact (IH a). exact H.
 Qed.
 
 Definition Spec {X Y} (f : option X -> option Y) x r_x :=
@@ -52,7 +52,8 @@ Definition r {X Y} (f : option X -> option Y) H x := projT1 (R f H x).
 Definition r_spec {X Y} (f : option X -> option Y) H x := projT2 (R f H x).
 
 Lemma r_agree {X Y} (f : option X -> option Y) H x x' :
-  x <> x' -> r f H x = r f H x' -> f(Some x) = f(Some x').
+let r := r f H in
+  x <> x' -> r x = r x' -> f(Some x) = f(Some x').
 Proof.
   unfold r; intros ne e.
   generalize (r_spec f H x), (r_spec f H x').
@@ -61,12 +62,12 @@ Proof.
   intros ?. clear e; cbn in *. pattern (f None).
   unfold Spec; destruct (f None) as [y0|].
   2: congruence.
-  destruct  (f (Some x)) as [y|], 
+  destruct  (f (Some x)) as [y|],
             (f (Some x')) as [y'|].
   * intros [][]; subst; congruence.
   * intros [] ?; subst; congruence.
   * intros ? []; subst; congruence.
-  * congruence.
+  * reflexivity.
 Qed.
 
 Lemma Pigeonhole M N (f : fin M -> fin N) :
@@ -75,12 +76,12 @@ Proof.
   revert M f. induction N.
   {intros [] f; [lia | destruct (f None)]. }
   intros [|M] f H_NM; try lia.
-  destruct (fin_dec (fun x => f (Some x) = f None)) as [H|H].
+  destruct (dec_exists (fun x => f (Some x) = f None)) as [H|H].
   { intros ?; apply EQ_fin. }
+  - destruct H as [x Hx]. exists (Some x), None.
+    split; congruence.
   - destruct (IHN _ (r f H) ltac:(lia)) as (x & x'&[]).
     exists (Some x), (Some x').
     split; try congruence.
     eapply r_agree; eauto.
-  - destruct H as [x Hx]. exists (Some x), None.
-    split; congruence.
 Qed.
