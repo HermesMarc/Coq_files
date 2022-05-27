@@ -26,7 +26,6 @@ Defined.
 
 (* Division with Rest *)
 
-
 Definition Euclid y x :
   Sigma a b, x = a*y + b  /\  (0 < y <-> b < y).
 Proof.
@@ -585,52 +584,9 @@ Section PrimeInf.
   Proof.
     destruct x; apply (projT2 (infty_irred _)).
   Qed.
-  
+
 
 End PrimeInf.
-
-Fact DN (A : Prop) : A -> ~~A. tauto. Qed.
-Fact DN_chain {A B : Prop} : ~~B -> ~~(B -> A) -> ~~A. tauto. Qed. 
-
-Lemma preThm4_nat A :
-  forall n, ~~ exists a, forall u, (u < n -> A u <-> Mod (Irred u) a = 0) /\ (Mod (Irred u) a = 0 -> u < n).
-  Proof.
-    induction n.
-    -  apply DN. exists 1. intros u. split. lia.
-      intros [k ]%Mod_divides.
-      assert (Irred u > 1). apply irred_Irred.
-      destruct k; lia.
-    - assert (~~ (A n \/ ~ A n)) as nnDec_A by tauto.
-      apply (DN_chain nnDec_A), (DN_chain IHn), DN.
-      intros [a Ha] [A_n | NA_n].
-      + exists (a * Irred n). intros u.
-        assert (u < S n <-> u < n \/ u = n) as -> by lia.
-        split.
-        ++ intros [| ->]. split.
-           +++ intros A_u%Ha.
-               rewrite Mod_mult_hom, A_u.
-               now rewrite Mod0_is_0.
-               apply H.
-           +++ intros [|H']%irred_integral_domain.
-               apply Ha; assumption.
-               apply irred_Mod_eq, inj_Irred in H'. lia. 
-               all: apply irred_Irred.
-           +++ intuition. apply Mod_divides. 
-               now exists a.
-        ++ intros [H |H]%irred_integral_domain.
-           apply Ha in H. auto.
-           apply irred_Mod_eq, inj_Irred in H. lia. 
-           all: apply irred_Irred.
-           
-      + exists a. intros u.
-        assert (u < S n <-> u < n \/ u = n) as -> by lia.
-        split.
-        ++ intros Hu. destruct Hu as [| ->]. 
-           now apply Ha.
-           split. now intros ?%NA_n.
-           intros H%Ha. lia.
-        ++ intros H%Ha. tauto.
-  Qed.
 
 
 

@@ -1,13 +1,15 @@
-(* Slightly modified version of the Drinker's Paradox, making it equivalent to DN, LEM and similar statements in the constructive Logic of Coq. *)
+(*  Slightly modified version of the Drinker's Paradox, making it equivalent 
+    to DN, LEM and similar statements in the constructive Logic of Coq. 
+*)
 
 
 Definition Eater := forall X (p : X -> Prop), 
   forall a : X, exists x, (~~p x -> forall y, p y).
 
 Definition classical q : Prop := forall P : Prop, ~~ q P.
-Definition tauto (q : Prop -> Prop) := forall P : Prop, q P.
+Definition constructive (q : Prop -> Prop) := forall P : Prop, q P.
 
-Lemma Eater_cl q : classical q -> Eater -> tauto q.
+Lemma Eater_cl q : classical q -> Eater -> constructive q.
 Proof.
   intros Hq eater X.
   specialize (eater _ q) as [P H]; auto.
@@ -30,7 +32,6 @@ Section DN.
     exists y. tauto.
   Qed.
 
-
   Goal Eater -> DN.
   Proof.
     refine (Eater_cl _ _).
@@ -38,8 +39,6 @@ Section DN.
   Qed.
 
 End DN.
-
-
 
 
 Section LEM.

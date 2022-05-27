@@ -1,7 +1,9 @@
 Load Preamble.
 
-(* Here is the most common formulation of Lawvere's Fixpoint theorem:
-  If there is a surjection X -> X -> Y, then every function Y -> Y has a fixpoint. *)
+(*  Here is the most common formulation of Lawvere's Fixpoint theorem:
+    If there is a surjection X -> X -> Y, then every function Y -> Y 
+    has a fixpoint. 
+ *)
 Section Lawvere.
   Variables X Y : Type.
   Implicit Type g : Y -> Y.
@@ -18,26 +20,30 @@ Section Lawvere.
 End Lawvere.
 
 
-(* 
-  Remark (2.2) on nLab: Lawvere remarks that surjectivity up to functional extensionality (he calls it weak surj.) is enough to show the fixpoint theorem.
+(*  Remark (2.2) on nLab: Lawvere remarks that surjectivity up to
+    functional extensionality (he calls it weak surj.) is enough to 
+    show the fixpoint theorem.
 
-  We additionally want to note that we can generalize from the function type Y -> Y to relations Y -> Y -> Prop. This turns the fixpoint-theorem into a theorem showing the existence of a reflexive element.
-*)
+    We additionally want to note that we can generalize from the 
+    function type Y -> Y to relations Y -> Y -> Prop. This turns 
+    the fixpoint-theorem into a theorem showing the existence of 
+    a reflexive element.
+ *)
 Section repr.
   Variables I X Y : Type.
-  Implicit Type g : X -> Y -> Prop.
+  Implicit Type R : X -> Y -> Prop.
 
-  Definition repr f (i : I) g := 
-    forall x : X, g x ((f i) x).
+  Definition repr R f :=
+    forall x : X, R x (f x).
 
-  Definition ext_representable f g :=
-    exists i : I, repr f i g.
+  Definition ext_repr R f :=
+    exists i : I, repr R (f i).
 
   Definition ext_surj f :=
-    forall g, ext_representable f g.
+    forall R, ext_repr R f.
 End repr.
-Arguments repr {_ _ _}.
-Arguments ext_representable {_ _ _}.
+Arguments repr {_ _}.
+Arguments ext_repr {_ _ _}.
 Arguments ext_surj {_ _ _}.
 
 
@@ -49,27 +55,27 @@ Implicit Type f : X -> X -> Y.
 
 Definition diag R f := fun x => R (f x x).
 
-(* If we are interested in a reflexive point for one particular relation R, we only need a representation (up to extensionality) of R (f x x) *)
+(*  If we are interested in a reflexive point for one particular 
+    relation R, we only need a representation (up to extensionality) 
+    of R (f x x) 
+ *)
 Fact diag_refl R f :
-  forall a, repr f a (diag R f) -> R (f a a) (f a a).
+  forall a, repr (diag R f) (f a) -> R (f a a) (f a a).
 Proof.
   refine (fun a H => H a).
 Qed.
 
-
 Fact Lawvere_diag R f :
-  ext_representable f (diag R f) -> exists y, R y y.
+  ext_repr (diag R f) f -> exists y, R y y.
 Proof.
   intros [a ?%diag_refl]. now exists (f a a).
 Qed.
-
 
 Fact Lawvere f :
   ext_surj f -> forall R, exists y, R y y.
 Proof.
   intros Hf R. apply (Lawvere_diag R f), Hf.
 Qed.
-
 
 Fact CP_Lawvere :
   (exists R, forall y, ~ R y y) -> forall f, ~ ext_surj f.
@@ -80,6 +86,7 @@ Proof.
 Qed.
 
 End Lawvere.
+
 
 
 

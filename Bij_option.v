@@ -1,7 +1,5 @@
-(* 
-
-This documents presents 3 different proofs (in the order they were conceived) of the fact that if option(X) and option(Y) are in bijection, then so are X and Y.  
-
+(*  This file contains 3 different proofs of the fact that if 
+    option(X) and option(Y) are in bijection, then so are X and Y.  
 *)
 
 Notation "'Sigma' x .. y , p" :=
@@ -19,16 +17,25 @@ Inductive Bij (X Y : Type) : Type :=
 Arguments Bijection {X Y}.
 
 
-(* Proof by Marc Hermes using a rewiring function and informative sigma types to get the desired extractions *)
-
-Definition rewire {X Y} (f : option X -> option Y) :=
-  fun ox =>
+(*  Proof using a rewiring function and informative sigma types 
+    to get the desired extractions (due to Marc Hermes)
+*)
+Definition bind {X Y} ox (f : X -> option Y) := 
   match ox with
   | None => None
-  | Some x => match f (Some x) with
-              | None => f None
-              | Some y => Some y
-  end end.
+  | Some x => f x
+  end.
+Notation "ox >>= f" := (bind ox f) (at level 42).
+
+Definition map_none {X} (N ox : option X) :=
+  match ox with
+  | None => N
+  | Some x => Some x
+  end.
+Notation "ox !>> oe" := (map_none oe ox) (at level 42).
+
+Definition rewire {X Y} (f : option X -> option Y) ox := 
+  ox >>= fun x => f(Some x) !>> f None.
 
 Section Lemmas.
   Variables X Y : Type.
@@ -38,7 +45,7 @@ Section Lemmas.
 Lemma inv_rewire :
   inv g f -> inv (rewire g) (rewire f).
 Proof.
-  intros gf. unfold rewire.
+  intros gf. unfold rewire, ">>=", "!>>".
   intros [x|]; auto.
   destruct (f (Some x)) as [y|] eqn:f_some; cbn.
   - now rewrite <-f_some, gf.
@@ -72,7 +79,7 @@ Lemma extract_rewire :
 Proof.
   intros gf. apply extraction.
   intros [x|]; [|reflexivity].
-  unfold rewire.
+  unfold rewire, ">>=", "!>>".
   destruct (f (Some x)) eqn:?; congruence.
 Qed.
 End Lemmas.
@@ -92,8 +99,9 @@ Qed.
 
 
 
-(* Proof due to Yannick Forster and Andrej Dudenhefner; making use of and illustrating how to handle dependant typing. *)
-
+(*  Proof making use of and illustrating how to handle dependent typing.
+    (due to Yannick Forster and Andrej Dudenhefner)
+ *)
 Lemma no_confusion {X} {Y} {f : option X -> option Y} {g} :
   inv g f -> forall x, f (Some x) <> f None.
 Proof. congruence. Qed.
@@ -148,11 +156,14 @@ Qed.
 
 
 
-(* The final and most succint proof was later devised by Prof. Gert Smolka *)
-
+(*  A very succint proof. (due to Prof. Gert Smolka)
+ *)
 Lemma Rewire X Y f g (gf : inv g f) :
   forall x : X, Sigma y : Y,
-    match f (Some x) with Some y' => y = y' | None => f None = Some y end.
+    match f (Some x) with
+      Some y' => y = y'
+    | None => f None = Some y 
+    end.
 Proof.
   intros x; destruct (f (Some x)) as [y|] eqn:?.
   - now exists y.
@@ -162,16 +173,15 @@ Proof.
 Qed.
 Arguments Rewire {_ _ _ _}.
 
-Lemma Rewire_inv {X Y} (f : option X -> option Y) g :
-  forall (fg : inv f g) (gf : inv g f),
+Lemma Rewire_inv {X Y} (f : option X -> option Y) g (fg : inv f g) (gf : inv g f) : 
     inv (fun y => p1 (Rewire fg y)) (fun x => p1 (Rewire gf x)).
 Proof.
-  intros fg gf x.
+  intros x.
   destruct (Rewire gf x) as [y ]; cbn.
   destruct (Rewire fg y) as []; cbn.
-  destruct (f (Some x)) as [|] eqn:?;
-    destruct (g (Some y)) as [|] eqn:?;
-    congruence.
+  destruct  (f (Some x)) as [] eqn:?,
+            (g (Some y)) as [] eqn:?;
+  congruence.
 Qed.
 
 Goal forall X Y, Bij (option X) (option Y) -> Bij X Y.

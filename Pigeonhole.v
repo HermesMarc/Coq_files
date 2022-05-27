@@ -31,7 +31,7 @@ Qed.
 
 (*  Proof of the Pigeonhole principle
 *)
-Definition RW {X Y} (f : option X -> option Y) :
+Definition R {X Y} (f : option X -> option Y) :
   (forall x, f(Some x) <> f None) ->
   forall x, { r_x &
     match f None, f(Some x) with
@@ -49,8 +49,25 @@ Proof.
   - exfalso. now apply (H x).
 Defined.
 
-Definition rw {X Y} (f : option X -> option Y) H x := projT1 (RW f H x).
-Definition rw_spec {X Y} (f : option X -> option Y) H x := projT2 (RW f H x).
+Definition r {X Y} (f : option X -> option Y) H x := projT1 (R f H x).
+Definition r_spec {X Y} (f : option X -> option Y) H x := projT2 (R f H x).
+
+Lemma r_agree {X Y} (f : option X -> option Y) H x x' :
+  x <> x' -> r f H x = r f H x' -> f(Some x) = f(Some x').
+Proof.
+  intros ne e.
+  generalize (r_spec f H x), (r_spec f H x').
+  unfold r in e. rewrite <-e.
+  generalize (projT1 (R f H x)) as z; fold fin.
+  intros ?. clear e; cbn in *. pattern (f None).
+  destruct (f None) as [y0|] eqn:f0.
+  2: congruence.
+  destruct  (f (Some x)) as [y|], (f (Some x')) as [y'|].
+  * now intros [? <-][? <-].
+  * intros [? <-] ->. exfalso. congruence.
+  * intros -> [? <-]. exfalso. congruence.
+  * congruence.
+Qed.
 
 Lemma Pigeonhole M N (f : fin M -> fin N) :
   M > N -> exists a b, a <> b /\ f a = f b.
@@ -60,19 +77,10 @@ Proof.
   intros [|M] f H_NM; try lia.
   destruct (fin_dec (fun x => f (Some x) = f None)) as [h|h].
   { intros ?; apply EQ_fin. }
-  - destruct (IHN _ (rw f h) ltac:(lia)) as (x & x' & ne & e).
-    exists (Some x), (Some x'). split; try congruence.
-    generalize (rw_spec f h x), (rw_spec f h x').
-    unfold rw in e. rewrite <-e.
-    generalize (projT1 (RW f h x)) as z; fold fin.
-    intros ?. clear e; cbn in *. pattern (f None).
-    destruct (f None) as [y0|] eqn:f0.
-    2: congruence.
-    destruct  (f (Some x)) as [y|], (f (Some x')) as [y'|].
-    * now intros [? <-][? <-].
-    * intros [? <-] ->. exfalso. congruence.
-    * intros -> [? <-]. exfalso. congruence.
-    * congruence.
+  - destruct (IHN _ (r f h) ltac:(lia)) as (x & x' & ne & e).
+    exists (Some x), (Some x'). 
+    split; try congruence.
+    eapply r_agree; eauto.
   - destruct h as [x Hx]. exists (Some x), None.
     split; congruence.
 Qed.

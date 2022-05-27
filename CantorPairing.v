@@ -25,7 +25,6 @@ Proof.
 Defined.
 
 
-
 Section Cantor.
 
 Definition next '(x,y) := 
@@ -39,7 +38,6 @@ Proof. destruct p as [[] ]; intuition discriminate. Qed.
 
 Fact inj_next : inj next.
 Proof. intros [[] ][[] ]; cbn; congruence. Qed.
-
 
 
 Fixpoint decode n := 
@@ -77,7 +75,6 @@ Proof.
   - rewrite !Nat.add_succ_r. cbn. auto.
 Qed.
 
-
 Lemma inv_dc : inv decode code.
 Proof.
   unfold inv.
@@ -93,12 +90,10 @@ Proof.
   intros ?. apply inj_decode. now rewrite inv_dc.
 Qed.
 
-
 Corollary Bij_Nat_NatNat : bijection nat (nat * nat).
 Proof.
   exists decode, code. split. apply inv_cd. apply inv_dc.
 Qed.
-
 
 Fact bound x y n : code (x, y) = n -> y < S n.
 Proof. cbn. lia. Qed.
