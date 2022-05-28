@@ -1,25 +1,8 @@
-Require Import Lists.List Lia.
-Import ListNotations.
-Notation "x 'el' A" := (In x A) (at level 70).
-Notation "x 'nel' A" := (~ In x A) (at level 70).
-Notation "'Sigma' x .. y , p" :=
-  (sigT (fun x => .. (sigT (fun y => p)) ..))
-    (at level 200, x binder, right associativity,
-     format "'[' 'Sigma'  '/  ' x  ..  y ,  '/  ' p ']'")
-  : type_scope.
-Definition iffT (X Y: Type) : Type := (X -> Y) * (Y -> X).
-Notation "X <=> Y" := (iffT X Y) (at level 95, no associativity).
-
+Require Import Lia.
 
 Definition dec P := {P} + {~P}.
 Definition decT P := sum P (P -> False).
 Definition EQ X := forall x y : X, {x = y} + {x <> y}.
-
-Fixpoint iter {X: Type} (f: X -> X) (n:nat) (x:X) : X :=
-  match n with
-  | 0 => x
-  | S n => f (iter f n x)
-  end.
 
 Fixpoint fin n : Type :=
   match n with 
@@ -29,41 +12,37 @@ Fixpoint fin n : Type :=
 
 Fact EQ_option X :
   EQ X -> EQ (option X).
-Proof.
-  intros H [x|][y|]; decide equality.
-Defined.
+Proof. intros H [x|][y|]; decide equality. Qed.
 
 Fact EQ_fin n : EQ (fin n).
-Proof.
-  induction n.
-  - intros [].
-  - now apply EQ_option.
-Defined.
+Proof. induction n. {intros []. } now apply EQ_option. Qed.
 
-Fact fin_dec_pred {n} (p: fin n -> Prop) :
-  (forall x, dec (p x)) -> (forall x, ~p x) + (exists x, p x).
+Fact dec_exists {n} (p: fin n -> Prop) :
+  (forall x, dec (p x)) -> (exists x, p x) + (forall x, ~p x).
 Proof.
   intros Hdec. induction n as [|n IH].
-  {left; intros []. }
+  {right; intros []. }
   specialize (IH (fun a => p (Some a))) as [IH|IH].
   { intros ?; apply Hdec. }
-  - destruct (Hdec None) as [H|H].
-    * right. exists None. apply H.
-    * left. intros [a|]. exact (IH a). exact H.
-  - right. destruct IH as [a H].
+  - left. destruct IH as [a H].
     exists (Some a). apply H.
+  - destruct (Hdec None) as [H|H].
+    * left. exists None. apply H.
+    * right. intros [a|]. exact (IH a). exact H.
 Qed.
 
+
+Definition Spec {X Y} (f : option X -> option Y) x r_x :=
+  match f None, f(Some x) with
+  | None    , _       => f(Some x) = Some r_x
+  | Some y0 , None    => r_x = y0
+  | Some y0 , Some y  => r_x <> y0 /\ r_x = y
+  end.
+
 Definition R {X Y} (f : option X -> option Y) :
-  (forall x, f(Some x) <> f None) ->
-  forall x, { r_x &
-    match f None, f(Some x) with
-    | None    , _       => f(Some x) = Some r_x
-    | Some y0 , None    => r_x = y0
-    | Some y0 , Some y  => r_x <> y0 /\ r_x = y
-    end}.
+  (forall x, f(Some x) <> f None) -> forall x, { r_x & Spec f x r_x}.
 Proof.
-  intros H x.
+  unfold Spec; intros H x.
   destruct  (f None) as [y0|] eqn:?, 
             (f (Some x)) as [y|] eqn:?.
   - exists y. split; congruence.
@@ -75,39 +54,38 @@ Defined.
 Definition r {X Y} (f : option X -> option Y) H x := projT1 (R f H x).
 Definition r_spec {X Y} (f : option X -> option Y) H x := projT2 (R f H x).
 
-Lemma r_agree {X Y} (f : option X -> option Y) H x x' : 
-let r_ := r f H in
-  x <> x' -> r_ x = r_ x' -> f(Some x) = f(Some x').
+Lemma r_agree {X Y} (f : option X -> option Y) H x x' :
+let r := r f H in
+  x <> x' -> r x = r x' -> f(Some x) = f(Some x').
 Proof.
   unfold r; intros ne e.
   generalize (r_spec f H x), (r_spec f H x').
   rewrite <-e.
-  generalize (projT1 (R f H x)) as z; fold fin.
-  intros ?. clear e; cbn in *. pattern (f None).
-  destruct (f None) as [y0|].
-  2: congruence.
-  destruct  (f (Some x)) as [y|], 
+  generalize (projT1 (R f H x)) as z.
+  intros ?. clear e; unfold Spec.
+  destruct (f None) as [y0|]. 2: congruence.
+  destruct  (f (Some x)) as [y|],
             (f (Some x')) as [y'|].
   * intros [][]; subst; congruence.
   * intros [] ?; subst; congruence.
   * intros ? []; subst; congruence.
-  * congruence.
+  * intros _ _ ; reflexivity.
 Qed.
 
 Lemma Pigeonhole M N (f : fin M -> fin N) :
   M > N -> exists a b, a <> b /\ f a = f b.
 Proof.
   revert M f. induction N.
-  {intros [] f; [lia | destruct (f None)]. }
+  { intros [] f; [lia | destruct (f None)]. }
   intros [|M] f H_NM; try lia.
-  destruct (fin_dec_pred (fun x => f (Some x) = f None)) as [h|h].
+  destruct (dec_exists (fun x => f(Some x) = f None)) as [H|H].
   { intros ?; apply EQ_fin. }
-  - destruct (IHN _ (r f h) ltac:(lia)) as (x & x' & ne & e).
+  - destruct H as [x ]. exists (Some x), None.
+    split; congruence.
+  - destruct (IHN _ (r f H) ltac:(lia)) as (x & x'&[]).
     exists (Some x), (Some x').
     split; try congruence.
     eapply r_agree; eauto.
-  - destruct h as [x Hx]. exists (Some x), None.
-    split; congruence.
 Qed.
 
 
@@ -138,6 +116,12 @@ Proof.
 Qed.
 
 
+Fixpoint iter {X: Type} (f: X -> X) (n:nat) (x:X) : X :=
+  match n with
+  | 0 => x
+  | S n => f (iter f n x)
+  end.
+
 Lemma cycle {N} f (x : fin N) :
   exists k c, c + k <= N /\ c > 0 /\ iter f (c + k) x = iter f k x.
 Proof.
@@ -152,7 +136,7 @@ Proof.
   - exists n, (m - n). 
     specialize (bound_fin2nat b) as B.
     repeat split; try lia.
-    replace (m - n + n) with m by lia. 
+    replace (m - n + n) with m by lia.
     symmetry. apply H.
   - exists m, (n - m). 
     specialize (bound_fin2nat a) as B.

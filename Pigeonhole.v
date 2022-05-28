@@ -66,16 +66,16 @@ Proof.
   * intros [][]; subst; congruence.
   * intros [] ?; subst; congruence.
   * intros ? []; subst; congruence.
-  * reflexivity.
+  * intros _ _ ; reflexivity.
 Qed.
 
 Lemma Pigeonhole M N (f : fin M -> fin N) :
   M > N -> exists a b, a <> b /\ f a = f b.
 Proof.
   revert M f. induction N.
-  {intros [] f; [lia | destruct (f None)]. }
+  { intros [] f; [lia | destruct (f None)]. }
   intros [|M] f H_NM; try lia.
-  destruct (dec_exists (fun x => f (Some x) = f None)) as [H|H].
+  destruct (dec_exists (fun x => f(Some x) = f None)) as [H|H].
   { intros ?; apply EQ_fin. }
   - destruct H as [x ]. exists (Some x), None.
     split; congruence.
@@ -86,16 +86,17 @@ Proof.
 Qed.
 
 Definition injective {X Y} (f : X -> Y) := (forall a b, f a = f b -> a = b).
-Lemma inj_leq M N (f : fin M -> fin N) :
+Lemma inj_ineq M N (f : fin M -> fin N) :
   injective f -> M <= N.
 Proof.
   revert M f. induction N.
-  {intros [] f; [lia | destruct (f None)]. }
-  intros [|M] f Inj; try lia.
-  destruct (dec_exists (fun x => f (Some x) = f None)) as [H|H].
+  { intros [] f; [lia | destruct (f None)]. }
+  intros [|M] f Inj; try lia. 
+  enough (M <= N) by lia. 
+  destruct (dec_exists (fun x => f(Some x) = f None)) as [H|H].
   { intros ?; apply EQ_fin. }
   - destruct H as [x [=]%Inj].
-  - enough (M <= N) by lia. apply (IHN _ (r f H)).
+  - apply (IHN _ (r f H)).
     intros x x' E. destruct (EQ_fin _ x x'); auto.
     enough (Some x = Some x') by congruence.
     eapply Inj, r_agree; eauto.

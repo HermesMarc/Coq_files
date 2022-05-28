@@ -174,7 +174,7 @@ Qed.
 Arguments Rewire {_ _ _ _}.
 
 Lemma Rewire_inv {X Y} (f : option X -> option Y) g (fg : inv f g) (gf : inv g f) : 
-    inv (fun y => p1 (Rewire fg y)) (fun x => p1 (Rewire gf x)).
+  inv (fun y => p1 (Rewire fg y)) (fun x => p1 (Rewire gf x)).
 Proof.
   intros x.
   destruct (Rewire gf x) as [y ]; cbn.
