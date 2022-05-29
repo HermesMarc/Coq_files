@@ -15,6 +15,10 @@ Proof. intros H [x|][y|]; decide equality. Qed.
 Fact EQ_fin n : EQ (fin n).
 Proof. induction n. {intros []. } now apply EQ_option. Qed.
 
+Fact eq_stable {X} :
+  EQ X -> forall x y : X, ~~ x = y -> x = y.
+Proof. intros Eq x y nne. destruct (Eq x y); tauto. Qed.
+
 Fact dec_exists {n} (p: fin n -> Prop) :
   (forall x, dec (p x)) -> (exists x, p x) + (forall x, ~p x).
 Proof.
@@ -53,9 +57,9 @@ Definition r_spec {X Y} (f : option X -> option Y) H x := projT2 (R f H x).
 
 Lemma r_agree {X Y} (f : option X -> option Y) H x x' :
 let r := r f H in
-  x <> x' -> r x = r x' -> f(Some x) = f(Some x').
+  r x = r x' -> f(Some x) = f(Some x').
 Proof.
-  unfold r; intros ne e.
+  unfold r; intros e.
   generalize (r_spec f H x), (r_spec f H x').
   rewrite <-e.
   generalize (projT1 (R f H x)) as z.
@@ -90,9 +94,9 @@ Lemma inj_ineq M N (f : fin M -> fin N) :
   injective f -> M <= N.
 Proof.
   revert M f. induction N.
-  { intros [] f; [lia | destruct (f None)]. }
-  intros [|M] f Inj; try lia. 
-  enough (M <= N) by lia. 
+  all: intros [|M] f Inj; try lia.
+  { destruct (f None). }
+  enough (M <= N) by lia.
   destruct (dec_exists (fun x => f(Some x) = f None)) as [H|H].
   { intros ?; apply EQ_fin. }
   - destruct H as [x [=]%Inj].
