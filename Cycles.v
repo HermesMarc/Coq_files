@@ -43,7 +43,7 @@ Definition R {X Y} (f : option X -> option Y) :
   (forall x, f(Some x) <> f None) -> forall x, { r_x & Spec f x r_x}.
 Proof.
   unfold Spec; intros H x.
-  destruct  (f None) as [y0|] eqn:?, 
+  destruct  (f None) as [y0|] eqn:?,
             (f (Some x)) as [y|] eqn:?.
   - exists y. split; congruence.
   - exists y0. reflexivity.
@@ -56,9 +56,9 @@ Definition r_spec {X Y} (f : option X -> option Y) H x := projT2 (R f H x).
 
 Lemma r_agree {X Y} (f : option X -> option Y) H x x' :
 let r := r f H in
-  x <> x' -> r x = r x' -> f(Some x) = f(Some x').
+  r x = r x' -> f(Some x) = f(Some x').
 Proof.
-  unfold r; intros ne e.
+  unfold r; intros e.
   generalize (r_spec f H x), (r_spec f H x').
   rewrite <-e.
   generalize (projT1 (R f H x)) as z.
@@ -69,7 +69,7 @@ Proof.
   * intros [][]; subst; congruence.
   * intros [] ?; subst; congruence.
   * intros ? []; subst; congruence.
-  * intros _ _ ; reflexivity.
+  * intros [][]; reflexivity.
 Qed.
 
 Lemma Pigeonhole M N (f : fin M -> fin N) :
@@ -82,7 +82,7 @@ Proof.
   { intros ?; apply EQ_fin. }
   - destruct H as [x ]. exists (Some x), None.
     split; congruence.
-  - destruct (IHN _ (r f H) ltac:(lia)) as (x & x'&[]).
+  - destruct (IHN _ (r f H) ltac:(lia)) as (x & x' &[]).
     exists (Some x), (Some x').
     split; try congruence.
     eapply r_agree; eauto.

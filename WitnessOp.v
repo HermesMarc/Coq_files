@@ -19,7 +19,7 @@ Section WO.
     intros. apply IHn. now constructor.
   Defined.
 
-  Lemma preWitness :
+  Lemma foundWitness :
     forall n, found n -> sigT q.
   Proof.
     apply found_rect.
@@ -30,12 +30,11 @@ Section WO.
   Theorem Witness :
     ex q -> sigT q.
   Proof.
-    intros H. apply (preWitness 0).
+    intros H. apply (foundWitness 0).
     destruct H as [n H]. destruct (Dec_q n).
     - eapply grounded, q_found, H.
     - tauto.
   Defined.
-
 End WO.
 End WO.
 

@@ -32,13 +32,13 @@ Qed.
 Definition r {X Y} (f : option X -> option (option Y)) x :=
   match f None, f(Some x) with
   | None    , None    => None
-  | None    , Some y  => y
   | Some y0 , None    => y0
-  | Some y0 , Some y  => y
+  | _       , Some y  => y
   end.
 
-Lemma r_agree {X Y} f x x' (Hf : forall x, f(Some x) <> f None) :
-  r f x = @r X Y f x' -> f(Some x) = f(Some x').
+Lemma r_agree {X Y} f x x' (H : forall x, f(Some x) <> f None) :
+let r := @r X Y f in
+  r x = r x' -> f(Some x) = f(Some x').
 Proof.
   unfold r.
   destruct  (f (Some x)) eqn:?,
@@ -61,7 +61,7 @@ Lemma Pigeonhole M N (f : fin M -> fin N) :
 Proof.
   revert M f. induction N.
   all: intros [|M] f Surj; try lia.
-  {destruct (f None). }
+  { destruct (f None). }
   destruct N as [|N].
   { now apply trivial_Pigeonhole. }
   destruct (dec_exists (fun x => f(Some x) = f None)) as [H|H].
