@@ -15,10 +15,6 @@ Proof. intros H [x|][y|]; decide equality. Qed.
 Fact EQ_fin n : EQ (fin n).
 Proof. induction n. {intros []. } now apply EQ_option. Qed.
 
-Fact eq_stable {X} :
-  EQ X -> forall x y : X, ~~ x = y -> x = y.
-Proof. intros Eq x y nne. destruct (Eq x y); tauto. Qed.
-
 Fact dec_exists {n} (p: fin n -> Prop) :
   (forall x, dec (p x)) -> (exists x, p x) + (forall x, ~p x).
 Proof.
@@ -33,75 +29,47 @@ Proof.
     * right. intros [a|]. exact (IH a). exact H.
 Qed.
 
-Definition Spec {X Y} (f : option X -> option Y) x r_x :=
+Definition r {X Y} (f : option X -> option (option Y)) x :=
   match f None, f(Some x) with
-  | None    , _       => f(Some x) = Some r_x
-  | Some y0 , None    => r_x = y0
-  | Some y0 , Some y  => r_x <> y0 /\ r_x = y
+  | None    , None    => None
+  | None    , Some y  => y
+  | Some y0 , None    => y0
+  | Some y0 , Some y  => y
   end.
 
-Definition R {X Y} (f : option X -> option Y) :
-  (forall x, f(Some x) <> f None) -> forall x, { r_x & Spec f x r_x}.
+Lemma r_agree {X Y} f x x' (Hf : forall x, f(Some x) <> f None) :
+  r f x = @r X Y f x' -> f(Some x) = f(Some x').
 Proof.
-  unfold Spec; intros H x.
-  destruct  (f None) as [y0|] eqn:?, 
-            (f (Some x)) as [y|] eqn:?.
-  - exists y. split; congruence.
-  - exists y0. reflexivity.
-  - exists y. reflexivity.
-  - exfalso. now apply (H x).
-Defined.
+  unfold r.
+  destruct  (f (Some x)) eqn:?,
+            (f (Some x')) eqn:?,
+            (f None) eqn:?; congruence.
+Qed.
 
-Definition r {X Y} (f : option X -> option Y) H x := projT1 (R f H x).
-Definition r_spec {X Y} (f : option X -> option Y) H x := projT2 (R f H x).
-
-Lemma r_agree {X Y} (f : option X -> option Y) H x x' :
-let r := r f H in
-  r x = r x' -> f(Some x) = f(Some x').
+Fact trivial_Pigeonhole M (f : fin (S M) -> fin 1) :
+  S M > 1 -> exists a b, a <> b /\ f a = f b.
 Proof.
-  unfold r; intros e.
-  generalize (r_spec f H x), (r_spec f H x').
-  rewrite <-e.
-  generalize (projT1 (R f H x)) as z.
-  intros ?. clear e; unfold Spec.
-  destruct (f None) as [y0|]. 2: congruence.
-  destruct  (f (Some x)) as [y|],
-            (f (Some x')) as [y'|].
-  * intros [][]; subst; congruence.
-  * intros [] ?; subst; congruence.
-  * intros ? []; subst; congruence.
-  * intros _ _ ; reflexivity.
+  intros ?. destruct M; try lia. 
+  exists None, (Some None).
+  split; try congruence.
+  now destruct (f None) as [[]|],
+        (f (Some None)) as [[]|].
 Qed.
 
 Lemma Pigeonhole M N (f : fin M -> fin N) :
   M > N -> exists a b, a <> b /\ f a = f b.
 Proof.
   revert M f. induction N.
-  { intros [] f; [lia | destruct (f None)]. }
-  intros [|M] f H_NM; try lia.
+  all: intros [|M] f Surj; try lia.
+  {destruct (f None). }
+  destruct N as [|N].
+  { now apply trivial_Pigeonhole. }
   destruct (dec_exists (fun x => f(Some x) = f None)) as [H|H].
   { intros ?; apply EQ_fin. }
   - destruct H as [x ]. exists (Some x), None.
     split; congruence.
-  - destruct (IHN _ (r f H) ltac:(lia)) as (x & x'&[]).
+  - destruct (IHN M (r f) ltac:(lia)) as (x & x' &[]).
     exists (Some x), (Some x').
     split; try congruence.
     eapply r_agree; eauto.
-Qed.
-
-Definition injective {X Y} (f : X -> Y) := (forall a b, f a = f b -> a = b).
-Lemma inj_ineq M N (f : fin M -> fin N) :
-  injective f -> M <= N.
-Proof.
-  revert M f. induction N.
-  all: intros [|M] f Inj; try lia.
-  { destruct (f None). }
-  enough (M <= N) by lia.
-  destruct (dec_exists (fun x => f(Some x) = f None)) as [H|H].
-  { intros ?; apply EQ_fin. }
-  - destruct H as [x [=]%Inj].
-  - apply (IHN _ (r f H)).
-    intros x x' E. destruct (EQ_fin _ x x'); auto.
-    enough (Some x = Some x') by congruence.
-    eapply Inj, r_agree; eauto.
 Qed.
