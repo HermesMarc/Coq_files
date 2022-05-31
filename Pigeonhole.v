@@ -10,13 +10,13 @@ Fixpoint fin n : Type :=
 
 Fact EQ_option X :
   EQ X -> EQ (option X).
-Proof. intros H [x|][y|]; decide equality. Qed.
+Proof. intros H [x|][y|]; decide equality. Defined.
 
 Fact EQ_fin n : EQ (fin n).
-Proof. induction n. {intros []. } now apply EQ_option. Qed.
+Proof. induction n. {intros []. } now apply EQ_option. Defined.
 
 Fact dec_exists {n} (p: fin n -> Prop) :
-  (forall x, dec (p x)) -> (exists x, p x) + (forall x, ~p x).
+  (forall x, dec (p x)) ->  {x & p x} + (forall x, ~p x).
 Proof.
   intros Hdec. induction n as [|n IH].
   {right; intros []. }
@@ -27,7 +27,7 @@ Proof.
   - destruct (Hdec None) as [H|H].
     * left. exists None. apply H.
     * right. intros [a|]. exact (IH a). exact H.
-Qed.
+Defined.
 
 Definition r {X Y} (f : option X -> option (option Y)) x :=
   match f None, f(Some x) with
@@ -47,9 +47,9 @@ Proof.
 Qed.
 
 Fact trivial_Pigeonhole M (f : fin (S M) -> fin 1) :
-  S M > 1 -> exists a b, a <> b /\ f a = f b.
+  S M > 1 -> {a &{ b & a <> b /\ f a = f b}}.
 Proof.
-  intros ?. destruct M; try lia. 
+  intros ?. destruct M; try lia.
   exists None, (Some None).
   split; try congruence.
   now destruct (f None) as [[]|],
@@ -57,7 +57,7 @@ Proof.
 Qed.
 
 Lemma Pigeonhole M N (f : fin M -> fin N) :
-  M > N -> exists a b, a <> b /\ f a = f b.
+  M > N -> {a &{ b & a <> b /\ f a = f b}}.
 Proof.
   revert M f. induction N.
   all: intros [|M] f Surj; try lia.
@@ -72,4 +72,4 @@ Proof.
     exists (Some x), (Some x').
     split; try congruence.
     eapply r_agree; eauto.
-Qed.
+Defined.

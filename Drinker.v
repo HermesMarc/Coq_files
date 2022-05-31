@@ -1,5 +1,5 @@
 (*  Slightly modified version of the Drinker's Paradox, making it equivalent 
-    to DN, LEM and similar statements in the constructive Logic of Coq. 
+    to DNE, LEM and similar statements in the constructive Logic of Coq. 
 *)
 
 
@@ -16,29 +16,29 @@ Proof.
 Qed.
 
 
-Section DN.
+Section DNE.
 
   Definition stable X := ~~ X -> X.
-  Definition DN := forall X, stable X.
+  Definition DNE := forall X, stable X.
 
-  Goal DN -> Eater.
+  Goal DNE -> Eater.
   Proof.
-    intros dn X p x.
-    apply dn.
+    intros dnE X p x.
+    apply dnE.
     intros nH. apply nH.
     exists x.
-    intros _ y. apply dn.
+    intros _ y. apply dnE.
     intros ?. apply nH.
     exists y. tauto.
   Qed.
 
-  Goal Eater -> DN.
+  Goal Eater -> DNE.
   Proof.
     refine (Eater_cl _ _).
     unfold classical, stable. tauto.
   Qed.
 
-End DN.
+End DNE.
 
 
 Section LEM.

@@ -9,7 +9,6 @@ Definition inv {X Y} (g : Y -> X) (f : X -> Y) :=
 Definition bijection X Y :=
   { f : X -> Y & { g & inv g f /\ inv f g }}.
 
-
 Section Bijection.
 
   Variable code : nat * nat -> nat.
@@ -69,7 +68,7 @@ Section Bijection.
     intros ?. apply inj_g. now rewrite inv_gf.
   Defined.
   
-  
+
   Corollary Bij_Nat_listNat : bijection nat (list nat).
   Proof.
     exists f, g. split. apply inv_gf. apply inv_fg.
