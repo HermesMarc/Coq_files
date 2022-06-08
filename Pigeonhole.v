@@ -3,9 +3,9 @@ Definition dec P := {P} + {~P}.
 Definition EQ X := forall x y : X, {x = y} + {x <> y}.
 
 Fixpoint fin n : Type :=
-  match n with 
-    0 => False 
-  | S n' => option (fin n') 
+  match n with
+    0 => False
+  | S n' => option (fin n')
   end.
 
 Fact EQ_option X :
@@ -18,15 +18,10 @@ Proof. induction n. {intros []. } now apply EQ_option. Defined.
 Fact dec_exists {n} (p: fin n -> Prop) :
   (forall x, dec (p x)) ->  {x & p x} + (forall x, ~p x).
 Proof.
-  intros Hdec. induction n as [|n IH].
-  {right; intros []. }
-  specialize (IH (fun a => p (Some a))) as [IH|IH].
-  { intros ?; apply Hdec. }
-  - left. destruct IH as [a H].
-    exists (Some a). apply H.
-  - destruct (Hdec None) as [H|H].
-    * left. exists None. apply H.
-    * right. intros [a|]. exact (IH a). exact H.
+  intros Dec_p. induction n as [|n IH]; auto.
+  destruct (IH (fun x => p(Some x)) ltac:(firstorder)) as [[]|]; eauto.
+  destruct (Dec_p None); eauto.
+  right; intros []; auto.
 Defined.
 
 Definition r {X Y} (f : option X -> option (option Y)) x :=
@@ -64,10 +59,9 @@ Proof.
   { destruct (f None). }
   destruct N as [|N].
   { now apply trivial_Pigeonhole. }
-  destruct (dec_exists (fun x => f(Some x) = f None)) as [H|H].
+  destruct (dec_exists (fun x => f(Some x) = f None)) as [[x ]|H].
   { intros ?; apply EQ_fin. }
-  - destruct H as [x ]. exists (Some x), None.
-    split; congruence.
+  - exists (Some x), None. split; congruence.
   - destruct (IHN M (r f) ltac:(lia)) as (x & x' &[]).
     exists (Some x), (Some x').
     split; try congruence.

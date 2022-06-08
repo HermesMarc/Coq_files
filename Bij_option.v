@@ -1,6 +1,7 @@
-(*  This file contains 3 different proofs of the fact that if 
-    option(X) and option(Y) are in bijection, then so are X and Y.  
-*)
+(*
+    This file contains 3 different proofs of the fact that if 
+    option(X) and option(Y) are in bijection, then so are X and Y.
+  *)
 
 Notation "'Sigma' x .. y , p" :=
   (sigT (fun x => .. (sigT (fun y => p)) ..))
@@ -20,22 +21,14 @@ Arguments Bijection {X Y}.
 (*  Proof using a rewiring function and informative sigma types 
     to get the desired extractions (due to Marc Hermes)
 *)
-Definition bind {X Y} ox (f : X -> option Y) := 
+Definition rewire {X Y} (f : option X -> option Y) ox :=
   match ox with
   | None => None
-  | Some x => f x
+  | Some x => match f(Some x) with
+              | None => f None
+              | Some y => Some y
+              end
   end.
-Notation "ox >>= f" := (bind ox f) (at level 42).
-
-Definition map_none {X} (N ox : option X) :=
-  match ox with
-  | None => N
-  | Some x => Some x
-  end.
-Notation "ox !>> oe" := (map_none oe ox) (at level 42).
-
-Definition rewire {X Y} (f : option X -> option Y) ox := 
-  ox >>= fun x => f(Some x) !>> f None.
 
 Section Lemmas.
   Variables X Y : Type.
@@ -45,7 +38,7 @@ Section Lemmas.
 Lemma inv_rewire :
   inv g f -> inv (rewire g) (rewire f).
 Proof.
-  intros gf. unfold rewire, ">>=", "!>>".
+  intros gf. unfold rewire.
   intros [x|]; auto.
   destruct (f (Some x)) as [y|] eqn:f_some; cbn.
   - now rewrite <-f_some, gf.
@@ -54,8 +47,8 @@ Proof.
     + congruence.
 Qed.
 
-Definition extract {A B} h := 
-  forall a : A, Sigma b : B, h (Some a) = Some b.
+Definition extract {X Y} f := 
+  forall x:X, Sigma y:Y, f(Some x) = Some y.
 
 Lemma inv_extract (F : extract f) (G : extract g) : 
   inv g f -> inv (fun y => p1 (G y)) (fun x => p1 (F x)).
@@ -79,7 +72,7 @@ Lemma extract_rewire :
 Proof.
   intros gf. apply extraction.
   intros [x|]; [|reflexivity].
-  unfold rewire, ">>=", "!>>".
+  unfold rewire.
   destruct (f (Some x)) eqn:?; congruence.
 Qed.
 End Lemmas.
@@ -158,7 +151,7 @@ Qed.
 
 (*  A very succint proof. (due to Prof. Gert Smolka)
  *)
-Lemma Rewire X Y f g (gf : inv g f) :
+Lemma Rewire {X Y f g} (gf : inv g f) :
   forall x : X, Sigma y : Y,
     match f (Some x) with
       Some y' => y = y'
@@ -171,7 +164,6 @@ Proof.
     + now exists y.
     + exfalso. congruence.
 Qed.
-Arguments Rewire {_ _ _ _}.
 
 Lemma Rewire_inv {X Y} (f : option X -> option Y) g (fg : inv f g) (gf : inv g f) : 
   inv (fun y => p1 (Rewire fg y)) (fun x => p1 (Rewire gf x)).

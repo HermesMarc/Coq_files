@@ -281,7 +281,7 @@ Section Minimal.
   let P_x := @atom _ _ _ P x in
     stable_atoms -> nil ⊢M ¬ ∀ ¬ (P_x --> ∀ P_x).
   Proof.
-    intros stab.
+    cbn. intros stab.
     remember (atom x) as ϕ.
     apply II. eapply IE with ((ϕ --> ∀ ϕ)[$0..]).
     assert ( 
@@ -312,6 +312,7 @@ Section Minimal.
   Proof.
     induction phi; cbn; unfold Perice_Transform.
     - apply II, II.
+  Admitted.
 
 
   Lemma idempotent Gamma ϕ :
@@ -325,7 +326,7 @@ Section Minimal.
       + apply II. admit.
       + apply II, Ctx; firstorder.
       + 
- 
+  Admitted.
 
 
 
