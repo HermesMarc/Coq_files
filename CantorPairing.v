@@ -16,14 +16,13 @@ Definition bijection X Y :=
 
 Lemma size_rect {X} σ f : 
   (forall x, (forall y : X, σ y < σ x -> f y) -> f x) -> forall x, f x.
-Proof.
-  intros H x. apply H.
-  induction (σ x).
-  - intros y. now intros F % PeanoNat.Nat.nlt_0_r. 
-  - intros y Hy. apply H.
-    intros z Hz. apply IHn. lia.
+refine (fun size_rec x => size_rec x
+  (nat_rect (fun n => forall y, σ y < n -> f y)
+    (fun y Hy0 => ltac:(lia))
+    (fun x S_rec y Hyx => size_rec y 
+      (fun z Hzy => S_rec z ltac:(lia)))
+    (σ x))).
 Defined.
-
 
 Section Cantor.
 
@@ -34,7 +33,7 @@ Definition next '(x,y) :=
   end.
 
 Fact n00_next : forall p, (0,0) <> next p.
-Proof. destruct p as [[] ]; intuition discriminate. Qed.
+Proof. destruct p as [[] ]; discriminate. Qed.
 
 Fact inj_next : inj next.
 Proof. intros [[] ][[] ]; cbn; congruence. Qed.
@@ -97,6 +96,5 @@ Qed.
 
 Fact bound x y n : code (x, y) = n -> y < S n.
 Proof. cbn. lia. Qed.
-
 
 Section Cantor.

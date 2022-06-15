@@ -1,93 +1,10 @@
 Require Import Lia.
 
-Definition dec P := {P} + {~P}.
-Definition decT P := sum P (P -> False).
-Definition EQ X := forall x y : X, {x = y} + {x <> y}.
-
 Fixpoint fin n : Type :=
   match n with 
     0 => False 
   | S n' => option (fin n') 
   end.
-
-Fact EQ_option X :
-  EQ X -> EQ (option X).
-Proof. intros H [x|][y|]; decide equality. Qed.
-
-Fact EQ_fin n : EQ (fin n).
-Proof. induction n. {intros []. } now apply EQ_option. Qed.
-
-Fact dec_exists {n} (p: fin n -> Prop) :
-  (forall x, dec (p x)) -> (exists x, p x) + (forall x, ~p x).
-Proof.
-  intros Hdec. induction n as [|n IH].
-  {right; intros []. }
-  specialize (IH (fun a => p (Some a))) as [IH|IH].
-  { intros ?; apply Hdec. }
-  - left. destruct IH as [a H].
-    exists (Some a). apply H.
-  - destruct (Hdec None) as [H|H].
-    * left. exists None. apply H.
-    * right. intros [a|]. exact (IH a). exact H.
-Qed.
-
-
-Definition Spec {X Y} (f : option X -> option Y) x r_x :=
-  match f None, f(Some x) with
-  | None    , _       => f(Some x) = Some r_x
-  | Some y0 , None    => r_x = y0
-  | Some y0 , Some y  => r_x <> y0 /\ r_x = y
-  end.
-
-Definition R {X Y} (f : option X -> option Y) :
-  (forall x, f(Some x) <> f None) -> forall x, { r_x & Spec f x r_x}.
-Proof.
-  unfold Spec; intros H x.
-  destruct  (f None) as [y0|] eqn:?,
-            (f (Some x)) as [y|] eqn:?.
-  - exists y. split; congruence.
-  - exists y0. reflexivity.
-  - exists y. reflexivity.
-  - exfalso. now apply (H x).
-Defined.
-
-Definition r {X Y} (f : option X -> option Y) H x := projT1 (R f H x).
-Definition r_spec {X Y} (f : option X -> option Y) H x := projT2 (R f H x).
-
-Lemma r_agree {X Y} (f : option X -> option Y) H x x' :
-let r := r f H in
-  r x = r x' -> f(Some x) = f(Some x').
-Proof.
-  unfold r; intros e.
-  generalize (r_spec f H x), (r_spec f H x').
-  rewrite <-e.
-  generalize (projT1 (R f H x)) as z.
-  intros ?. clear e; unfold Spec.
-  destruct (f None) as [y0|]. 2: congruence.
-  destruct  (f (Some x)) as [y|],
-            (f (Some x')) as [y'|].
-  * intros [][]; subst; congruence.
-  * intros [] ?; subst; congruence.
-  * intros ? []; subst; congruence.
-  * intros [][]; reflexivity.
-Qed.
-
-Lemma Pigeonhole M N (f : fin M -> fin N) :
-  M > N -> exists a b, a <> b /\ f a = f b.
-Proof.
-  revert M f. induction N.
-  { intros [] f; [lia | destruct (f None)]. }
-  intros [|M] f H_NM; try lia.
-  destruct (dec_exists (fun x => f(Some x) = f None)) as [H|H].
-  { intros ?; apply EQ_fin. }
-  - destruct H as [x ]. exists (Some x), None.
-    split; congruence.
-  - destruct (IHN _ (r f H) ltac:(lia)) as (x & x' &[]).
-    exists (Some x), (Some x').
-    split; try congruence.
-    eapply r_agree; eauto.
-Qed.
-
 
 Definition fin2nat {n} (x : fin n) : nat.
 Proof.
@@ -115,12 +32,23 @@ Proof.
   - cbn; lia.
 Qed.
 
-
-Fixpoint iter {X: Type} (f: X -> X) (n:nat) (x:X) : X :=
+Fixpoint iter {X} (f: X -> X) n x :=
   match n with
   | 0 => x
   | S n => f (iter f n x)
   end.
+
+Fact iter_hom {X f} n m {x:X} :
+  iter f (n + m) x = iter f n (iter f m x).
+Proof. 
+  induction n; [reflexivity|cbn; now f_equal].
+Qed.
+
+
+Section Cycles.
+
+Hypothesis Pigeonhole : forall M N (f : fin M -> fin N),
+  M > N -> exists a b, a <> b /\ f a = f b.
 
 Lemma cycle {N} f (x : fin N) :
   exists k c, c + k <= N /\ c > 0 /\ iter f (c + k) x = iter f k x.
@@ -138,19 +66,11 @@ Proof.
     repeat split; try lia.
     replace (m - n + n) with m by lia.
     symmetry. apply H.
-  - exists m, (n - m). 
+  - exists m, (n - m).
     specialize (bound_fin2nat a) as B.
     repeat split; try lia.
     replace (n - m + m) with n by lia. 
     apply H.
-Qed.
-
-Fact iter_hom {X f} n m {x:X} :
-  iter f (n + m) x = iter f n (iter f m x).
-Proof.
-  induction n.
-  - reflexivity.
-  - cbn. now f_equal.
 Qed.
 
 Lemma reduce_once {X} n k m f (x:X) :
@@ -175,7 +95,7 @@ Qed.
 
 Notation "a \ b" := (exists x, a * x = b) (at level 42).
 
-Lemma Generalized n f (x : fin (S n)) a :
+Lemma Global_Cycling n f (x : fin (S n)) a :
   (forall k, k <= (S n) -> k \ a) -> iter f (a + n) x = iter f n x.
 Proof.
   intros Hdiv_a.
@@ -183,3 +103,4 @@ Proof.
   destruct (Hdiv_a c ltac:(lia)) as [d <-].
   eapply reduce_all with k; auto. lia.
 Qed.
+End Cycles.

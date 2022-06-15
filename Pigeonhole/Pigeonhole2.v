@@ -18,9 +18,9 @@ Proof. induction n. {intros []. } now apply EQ_option. Defined.
 Fact dec_exists {n} (p: fin n -> Prop) :
   (forall x, dec (p x)) ->  {x & p x} + (forall x, ~p x).
 Proof.
-  intros D. induction n as [|n IH]; auto.
+  intros dec_p. induction n as [|n IH]; auto.
   destruct (IH (fun x => p(Some x)) ltac:(firstorder)) as [[]|]; eauto.
-  destruct (D None); eauto.
+  destruct (dec_p None); eauto.
   right; intros []; auto.
 Defined.
 
@@ -31,39 +31,50 @@ Definition r {X Y} (f : option X -> option (option Y)) x :=
   | _       , Some y  => y
   end.
 
-Lemma r_agree {X Y} f x x' (H : forall x, f(Some x) <> f None) :
-let r := @r X Y f in
-  r x = r x' -> f(Some x) = f(Some x').
-Proof.
-  unfold r.
-  destruct  (f (Some x)) eqn:?,
-            (f (Some x')) eqn:?,
-            (f None) eqn:?; congruence.
+Definition pair {X Y} (f : X -> Y) a := {b : X & a <> b /\ f a = f b}.
+
+Section Facts.
+Context {X Y : Type} (f : option X -> option (option Y)).
+Hypothesis (H : forall x, f(Some x) <> f None). 
+
+Fact r_agree x x' :
+  r f x = r f x' -> f(Some x) = f(Some x').
+Proof. 
+  unfold r. destruct
+  (f (Some x))  eqn:?,
+  (f (Some x')) eqn:?,
+  (f None)      eqn:?; congruence.
 Qed.
 
-Fact trivial_Pigeonhole M (f : fin (S M) -> fin 1) :
-  S M > 1 -> {a &{ b & a <> b /\ f a = f b}}.
+Fact related_pair : 
+  sigT (pair (r f)) -> sigT (pair f).
 Proof.
-  intros ?. destruct M; try lia.
+  intros (a & b & []).
+  exists (Some a), (Some b).
+  split; try congruence.
+  eapply r_agree; eauto.
+Qed.
+
+Fact trivial_pair (g : option (option X) -> fin 1) :
+  sigT (pair g).
+Proof.
   exists None, (Some None).
   split; try congruence.
-  now destruct (f None) as [[]|],
-        (f (Some None)) as [[]|].
+  now destruct (g None) as [[]|],
+        (g (Some None)) as [[]|].
 Qed.
+End Facts.
 
 Lemma Pigeonhole M N (f : fin M -> fin N) :
-  M > N -> {a &{ b & a <> b /\ f a = f b}}.
+  M > N -> sigT (pair f).
 Proof.
   revert M f. induction N.
   all: intros [|M] f MN; try lia.
   { destruct (f None). }
   destruct N as [|N].
-  { now apply trivial_Pigeonhole. }
+  { destruct M; try lia. apply trivial_pair. }
   destruct (dec_exists (fun x => f(Some x) = f None)) as [[x ]|H].
-  { intros ?; apply EQ_fin. }
+  - intros ?; apply EQ_fin.
   - exists (Some x), None. split; congruence.
-  - destruct (IHN M (r f) ltac:(lia)) as (x & x' &[]).
-    exists (Some x), (Some x').
-    split; try congruence.
-    eapply r_agree; eauto.
+  - apply related_pair, IHN; apply H || lia.
 Defined.
