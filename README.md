@@ -2,7 +2,7 @@ Some small projects in Coq I have finished or am still working on.
 
 - [`Pigeonhole.v`](/Pigeonhole.v) gives a concise proof of the pigeonhole principle for finite types.
 
-- [`Cycles.v`](/Cycles.v) uses the pigeonhole principle to show that for every finite type `X` with `n` elements, there is a natural number `a` such that for every function `f : X -> X` and `x : X` we have `f^(a + n-1) (x) = f^(n-1)(x)`. In other words: every function reaches a cycle of at most length `a` after only `n-1` iteration steps.
+- [`Cycles.v`](/Cycles.v) For every finite type `X` with `n` elements, there is a natural number `a` such that for every function `f : X -> X` and `x : X` we have `f^(a + n-1) (x) = f^(n-1)(x)`. In other words: No matter the function of the finite type, it has a cycle of at most length `a` after only `n-1` iteration steps.
 
 - [`Bij_option.v`](/Bij_option.v) shows that if `option(X)` and `option(Y)` are in bijection then so are `X` and `Y`. This can then used to show that the definition of finite types with n elements as `option^n(⊥)` is well-behaved.
 
