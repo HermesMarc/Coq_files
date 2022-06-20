@@ -16,8 +16,8 @@ Some small projects in Coq I have finished or am still working on.
 
 - [`MinimalLogic.v`](/MinimalLogic.v) first describes a deduction system for [minimal logic](https://en.wikipedia.org/wiki/Minimal_logic) and then establishes implications between LEM, the double negation law, contraposition, Peirce's Law, the explosion and contradiction principle, which would all be equivalent in intuitionistic logic. This was developed to go along a [question on stackexchange](https://math.stackexchange.com/questions/3758195/excluded-middle-double-negation-contraposition-and-peirces-law-in-minimal-log).
 
-- [`stable_expl.v`](/stable_expl.v) Fixing a formula `F` in minimal logic, one can say that a formula is *`F` explosive* if `F -> ϕ` is provable. The main result of the file is that all formulas are `F` explosive if and only if all atomic formulas are. (i.e. `F` behaves like ⊥ in this case)
-For example, in the case of Peano arithmetic: To show that `0 = 1` is explosive, it therefore suffices to show that `0 = 1` implies any other equation `s = t` for some terms `s, t`.
+- [`stable_expl.v`](/stable_expl.v) Fixing a formula `F` in minimal logic, one can say that a formula `ϕ` is *"`F` explosive"* if `F -> ϕ` is provable. The main result of the file is that all formulas are `F` explosive (i.e. `F` behaves like ⊥) if and only if all atomic formulas are.
+For example, in the case of Peano arithmetic: To show that `0 = 1` is explosive, it therefore suffices to show that `0 = 1` implies the truth of any other equation `s = t`.
 
 - [`Drinker.v`](/Drinker.v) has a slight variation of [Drinker paradox](https://en.wikipedia.org/wiki/Drinker_paradox) which is shown to be equivalent to LEM.
 

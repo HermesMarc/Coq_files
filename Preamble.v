@@ -16,9 +16,9 @@ Definition stable P := ((P -> False) -> False) -> P.
 Definition dec (P : Prop) := {P} + {~P}. 
 Definition Dec {X} p := forall x : X, dec (p x).
 
-Definition sdec (P : Prop) := Sigma (f : nat -> bool), P <=> exists n, f n = true.
-Definition Sdec {X} p := Sigma (f : nat -> X -> bool), forall x, p x <=> exists n, f n x = true.
-Definition enum {X} p := Sigma f, forall x : X, p x <=> exists n : nat, f n = Some x.
+Definition sdec (P : Prop) := exists (f : nat -> bool), P <=> exists n, f n = true.
+Definition Sdec {X} p := exists (f : nat -> X -> bool), forall x, p x <=> exists n, f n x = true.
+Definition enum {X} p := exists f, forall x : X, p x <=> exists n : nat, f n = Some x.
 
 Definition Enum X := Sigma f, forall x : X, exists n : nat, f n = Some x. 
 Definition EQ X := forall x y : X, dec (x = y).
