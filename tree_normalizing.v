@@ -53,7 +53,8 @@ Proof.
 Qed.
   
 
-Lemma free_leaf t : t <> o -> (exists t', Eq t (T o t') ).
+Lemma free_leaf t : 
+  t <> o -> (exists t', Eq t (T o t') ).
 Proof.
   intros noLeaf. induction t. now exists o.
   destruct t1.
@@ -71,23 +72,26 @@ Proof.
 Qed.
 
 Theorem pre_normalization : forall (n: nat)(t : tree), 
-            branches t < n -> exists t', normal t'  /\ Eq t t'.
+  branches t < n -> exists t', normal t'  /\ Eq t t'.
 Proof.
   induction n. destruct t; cbn; lia.
   destruct t; intro Bran. exists o; cbn; split. auto. apply EqRef.
   cbn in Bran. destruct t1.
-  - assert (branches t2 < n) as H by lia. destruct (IHn _ H) as [s N].
-    exists (T o s). split; cbn; try tauto. rewrite (proj2 N); apply EqRef.
+  - assert (branches t2 < n) as H by lia. 
+    destruct (IHn _ H) as [s [? E]].
+    exists (T o s). split; cbn; try tauto.
+    rewrite E; apply EqRef.
   - assert (T t1_1 t1_2 <> o) as  Triv by discriminate.
     destruct ( free_leaf (T t1_1 t1_2) Triv ) as [t1 N1].
-    eapply (ex_iff (fun x => normal x /\ Eq (T (T o t1) t2) x)). 
-    intros x. now rewrite N1.
+    eapply (ex_iff (fun x => normal x /\ Eq (T (T o t1) t2) x)).
+    { intros x. now rewrite N1. }
     assert (branches t2 < S n) as H by lia.
-    rewrite N1 in Bran; cbn in Bran. 
+    rewrite N1 in Bran; cbn in Bran.
     assert (S (branches t1 + branches t2) < n) as H' by lia.
-    change (branches (T t1 t2) < n) in H'. destruct (IHn _ H') as [s N].
-    exists (T o s). split; cbn; try tauto. rewrite EqAsso. 
-    now rewrite (proj2 N).
+    change (branches (T t1 t2) < n) in H'.
+    destruct (IHn _ H') as [s [? E]].
+    exists (T o s). split; cbn; try tauto.
+    now rewrite EqAsso, E. 
 Qed.
 
 

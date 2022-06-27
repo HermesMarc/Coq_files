@@ -1,7 +1,4 @@
-*.nia.cache
-*.lia.cache
+*.nia*
+*.lia*
 *.code-workspace
-.gitignore
 *temp*
-*hide*
-.gitignore

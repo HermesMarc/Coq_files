@@ -34,22 +34,34 @@ Section Minimal.
   | DE  A phi psi theta : A ⊢ phi ∨ psi -> phi::A ⊢ theta -> psi::A ⊢ theta -> A ⊢ theta
   where "A ⊢ phi" := (prv A phi).
 
+  Ltac Select n :=
+  match n with 
+  | 0 => left
+  | S ?x => right; Select x
+  end.
+  Ltac Exact n := apply Ctx; now Select n.
+  Ltac Apply n := eapply IE; [Exact n|idtac].
+  Ltac Intro := apply II.
+  Ltac Intros := repeat Intro.
+  Ltac Left := apply DI1.
+  Ltac Right := apply DI2.
+  Ltac Destruct n := eapply DE; [Exact n|idtac|idtac].
+
 
   Lemma Weak A B phi :
     A ⊢ phi -> A <<= B -> B ⊢ phi.
   Proof.
-    intros H. revert B.
-    induction H; intros B HB; try unshelve (solve [econstructor; intuition]); try now econstructor.
+    induction 1 in B |-*; try unshelve (solve [econstructor; intuition]); try now econstructor.
   Qed.
-
 
   Fact Imp A s t :
     A ⊢ s --> t <=> s::A ⊢ t.
   Proof.
     split.
-    - intros H. eapply IE. 2: apply Ctx. eapply Weak. exact H.
+    - intros H. eapply IE. 
+      2: apply Ctx. eapply Weak. exact H.
       all: firstorder.
-    - apply II.
+    - now Intro.
   Qed.
 
 
@@ -72,69 +84,61 @@ Section Minimal.
     apply (cp X Y). firstorder.
   Qed.
 
-
   Goal DN <=> CP.
   Proof.
     split.
     - intros dn A B.
-      generalize (dn B). 
-      eapply IE, II, II, II, IE.
-      apply Ctx; firstorder.
-      eapply II, IE. instantiate (1 := A).
-      eapply IE. all: apply Ctx; firstorder.
+      generalize (dn B).
+      eapply IE. Intros.
+      Apply 2. Intros.
+      eapply IE. instantiate (1 := A).
+      + Apply 2. Exact 0.
+      + Exact 1.
     - intros cp A. apply (CP' cp).
-      eapply II, II, (IE _ (_ --> _)).
-      apply Ctx; firstorder.
-      apply Ctx; firstorder.
+      Intros. Apply 0. Intros.
+      Apply 2. Exact 0.
   Qed.
-
 
   Goal DN -> Explosion.
   Proof.
     intros dn A.
     generalize (dn A).
-    eapply IE, II, II.
-    eapply IE. apply Ctx; firstorder.
-    apply II, Ctx; firstorder.
+    eapply IE. Intros.
+    Apply 1. Intros. Exact 1.
   Qed.
-
 
   Goal CP -> Peirce.
   Proof.
     intros cp A B. apply (CP' cp).
-    eapply II, II, IE. apply Ctx; firstorder.
-    eapply IE. apply Ctx; firstorder.
-    apply (CP' cp). apply II, Ctx. firstorder.
+    Intros. Apply 1. Apply 0.
+    apply (CP' cp). Intro. Exact 2.
   Qed.
-
 
   Goal Peirce -> LEM.
   Proof.
     intros peirce X.
     eapply IE. apply (peirce (X ∨ (X --> F)) F).
-    eapply II, DI2, II, IE. apply Ctx; firstorder.
-    apply DI1, Ctx; firstorder.
+    Intros. Right. Intros.
+    Apply 1. Left. Exact 0.
   Qed.
   
-
   Goal LEM * Explosion -> DN.
   Proof.
     intros [lem expl] X.
     generalize (lem X); apply IE.
     generalize (expl X); apply IE.
-    eapply II, II, II, DE. apply Ctx; firstorder.
-    - apply Ctx; firstorder.
-    - eapply IE. apply Ctx; firstorder.
-      eapply IE. apply (Ctx _ ((X --> F) --> _)); firstorder.
-      apply Ctx; firstorder.
+    Intros. Destruct 1.
+    - Exact 0.
+    - Apply 3. Apply 1. Exact 0.
   Qed.
 
 
   Section NonDeduc.
 
-    (* Meta Argument: Assume it is possible to show 
-      Peirce -> Explosion = forall X, |- F -> X. 
-      Since F was an arbitrary choice, this would mean we would really have a way of showing : *)
+    (*  Meta Argument: Assume it is possible to show 
+        Peirce -> Explosion = forall X, |- F -> X. 
+        Since F was an arbitrary choice, this would mean we would really have a way of showing : 
+     *)
     Hypothesis H : forall Y, Peirce -> forall X, nil ⊢ Y --> X.
 
     (* However it then turns out that *)
@@ -142,10 +146,9 @@ Section Minimal.
     Proof.
       intros peirce P.
       enough (nil ⊢ (P --> P) --> P) as C.
-      revert C. eapply IE, II, IE.
-      apply Ctx; firstorder.
-      eapply II, Ctx; firstorder.
-      now apply H.
+      revert C. eapply IE. 
+      - Intros. Apply 0. Intros. Exact 0.
+      - now apply H.
     Qed.
        
   End NonDeduc.

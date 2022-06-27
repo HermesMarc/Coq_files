@@ -11,14 +11,16 @@ Notation "X <=> Y" := (iffT X Y) (at level 95, no associativity).
 Notation p1 := projT1.
 Notation p2 := projT2.
 
+Definition LEM := forall X, X \/ ~X.
+
 Definition stable P := ((P -> False) -> False) -> P.
 
 Definition dec (P : Prop) := {P} + {~P}. 
 Definition Dec {X} p := forall x : X, dec (p x).
 
-Definition sdec (P : Prop) := exists (f : nat -> bool), P <=> exists n, f n = true.
-Definition Sdec {X} p := exists (f : nat -> X -> bool), forall x, p x <=> exists n, f n x = true.
-Definition enum {X} p := exists f, forall x : X, p x <=> exists n : nat, f n = Some x.
+Definition sdec (P : Prop) := exists (f : nat -> bool), P <-> exists n, f n = true.
+Definition Sdec {X} p := exists (f : nat -> X -> bool), forall x, p x <-> exists n, f n x = true.
+Definition enum {X} p := exists f, forall x : X, p x <-> exists n : nat, f n = Some x.
 
 Definition Enum X := Sigma f, forall x : X, exists n : nat, f n = Some x. 
 Definition EQ X := forall x y : X, dec (x = y).
@@ -40,6 +42,13 @@ Proof.
   intros H. unshelve eexists; intros x; cbn; now destruct (H x) as [y ].
 Defined.
 
-Fact DN {A : Prop} : A -> ~~A. tauto. Qed.
-Fact DN_bind {A B : Prop} : ~~A -> ~~(A -> B) -> ~~B. tauto. Qed.
-Fact DN_remove {A B} : ~~A -> (A -> ~B) -> ~B. tauto. Qed.
+
+Module DN.
+Definition ret {A : Prop} : A -> ~~A.                     tauto. Defined.
+Definition bind {A B : Prop} : ~~A -> ~~(A -> B) -> ~~B.  tauto. Defined.
+Definition remove {A B} : ~~A -> (A -> ~B) -> ~B.         tauto. Defined.
+Definition lem X : ~~(X \/ ~X).                           tauto. Defined.
+Definition dn X : ~~(~~X -> X).                           tauto. Defined.
+
+Ltac lem_ H := apply (bind (lem H)); try tauto.
+End DN.
