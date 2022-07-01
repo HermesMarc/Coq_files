@@ -50,7 +50,7 @@ Lemma r_agree {X Y} (f : option X -> option Y) H x x' :
 let r := r f H in
   r x = r x' -> f(Some x) = f(Some x').
 Proof.
-  unfold r; intros e.
+  unfold r in *; intros e.
   generalize (r_spec f H x), (r_spec f H x').
   rewrite <-e.
   generalize (projT1 (R f H x)) as z.
