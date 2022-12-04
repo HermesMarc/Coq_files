@@ -19,18 +19,13 @@ Fact EQ_fin n : EQ (fin n).
 Proof. induction n. {intros []. } now apply EQ_option. Qed.
 
 Fact dec_exists {n} (p: fin n -> Prop) :
-  (forall x, dec (p x)) -> (exists x, p x) + (forall x, ~p x).
+  (forall x, dec (p x)) ->  {x & p x} + (forall x, ~p x).
 Proof.
-  intros Hdec. induction n as [|n IH].
-  {right; intros []. }
-  specialize (IH (fun a => p (Some a))) as [IH|IH].
-  { intros ?; apply Hdec. }
-  - left. destruct IH as [a H].
-    exists (Some a). apply H.
-  - destruct (Hdec None) as [H|H].
-    * left. exists None. apply H.
-    * right. intros [a|]. exact (IH a). exact H.
-Qed.
+  intros Dec_p. induction n as [|n IH]; auto.
+  destruct (IH (fun x => p(Some x)) ltac:(firstorder)) as [[]|]; eauto.
+  destruct (Dec_p None); eauto.
+  right; intros []; auto.
+Defined.
 
 
 Definition r {X Y} (f : option X -> option (option Y)) x :=
@@ -126,12 +121,35 @@ Proof.
 Qed.
 
 Lemma ineq_surj M N :
-  M >= N -> exists f : fin M -> fin N, surjective f.
+  M >= S N -> exists f : fin M -> fin (S N), surjective f.
 Proof.
-Admitted.
+  revert M. induction N; intros [|M]; try lia.
+  { intros _. exists (option_rect _ (fun _ => None) None).
+    intros [[]|]. exists None. reflexivity. }
+  intros HMN. destruct (IHN M ltac:(lia)) as [f Surj].
+  exists (option_rect _ (fun x => Some (f x)) None).
+  intros [y|].
+  - destruct (Surj y) as [x ].
+    exists (Some x);cbn. congruence.
+  - exists None. reflexivity.
+Qed.
 
 
 Theorem inj_surj N (f : fin N -> fin N) :
   injective f <-> surjective f.
 Proof.
+  induction N as [|[|N] IH].
+  - split; intros ?[].
+  - split.
+    + intros H [[]|]. exists None.
+      now destruct (f None) as [[]|].
+    + now intros H [[]|][[]|].
+  - specialize (IH (r f)) as [H1 H2]. split.
+    + intros Inj%inj_r. 
+      assert (surjective (r f)) as Surj by tauto.
+      intros [y|].
+      * destruct (Surj y) as [x Hx]; fold fin in *.
+        exists (Some x).
+        admit.
+    + intros h%surj_r%H2.
 Admitted.

@@ -47,7 +47,7 @@ Qed.
 
 
 Instance branch_congruent :
-  Proper (Eq ==> (@eq nat) ) branches.
+  Proper (Eq ==> (@eq nat)) branches.
 Proof.
   intros t s H. induction H; cbn; lia.
 Qed.

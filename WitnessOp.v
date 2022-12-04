@@ -8,6 +8,15 @@ Section WO.
   Inductive found n : Prop :=
     C : (~ q n -> found (S n)) -> found n.
 
+  Definition found_rect' :
+    forall P : nat -> Type,
+    (forall n, (q n + P (S n)) -> P n) ->
+    forall n, found n -> P n.
+  Proof.
+    intros P H n. apply found_rect.
+    firstorder.
+  Defined.
+
   Lemma q_found n : q n -> found n.
   Proof.
     intros. now constructor.
@@ -37,7 +46,6 @@ Section WO.
   Defined.
 End WO.
 End WO.
-
 
 Section Exmpl.
   Require Import Lia.

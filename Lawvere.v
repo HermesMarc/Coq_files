@@ -21,8 +21,8 @@ End Lawvere.
 
 
 (*  Remark (2.2) on nLab: Lawvere remarks that surjectivity up to
-    functional extensionality (he calls it weak surj.) is enough to 
-    show the fixpoint theorem.
+    functional extensionality (he calls it weak surj.) is enough 
+    to show the fixpoint theorem.
 
     We additionally want to note that we can generalize from the 
     function type Y -> Y to relations Y -> Y -> Prop. This turns 
