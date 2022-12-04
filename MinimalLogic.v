@@ -35,17 +35,18 @@ Section Minimal.
   where "A ⊢ phi" := (prv A phi).
 
   Ltac Select n :=
-  match n with 
-  | 0 => left
-  | S ?x => right; Select x
-  end.
+    match n with 
+    | 0 => left
+    | S ?x => right; Select x
+    end.
   Ltac Exact n := apply Ctx; now Select n.
-  Ltac Apply n := eapply IE; [Exact n|idtac].
   Ltac Intro := apply II.
   Ltac Intros := repeat Intro.
+  Ltac Apply n := eapply IE; [Exact n|idtac].
   Ltac Left := apply DI1.
   Ltac Right := apply DI2.
   Ltac Destruct n := eapply DE; [Exact n|idtac|idtac].
+  Ltac Split := apply CI.
 
 
   Lemma Weak A B phi :
