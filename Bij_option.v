@@ -9,12 +9,9 @@ Notation "'Sigma' x .. y , p" :=
      format "'[' 'Sigma'  '/  ' x  ..  y ,  '/  ' p ']'")
   : type_scope.
 Notation p1 := projT1.
-
 Definition inv {X Y} g (f: X -> Y) := forall x, g (f x) = x.
-
 Inductive Bij (X Y : Type) : Type :=
 | Bijection: forall (f: X -> Y) (g: Y -> X), inv f g -> inv g f -> Bij X Y.
-
 Arguments Bijection {X Y}.
 
 

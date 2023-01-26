@@ -21,9 +21,10 @@ Definition Sdec {X} p := exists (f : nat -> X -> bool), forall x, p x <-> exists
 Definition enum {X} p := exists f, forall x : X, p x <-> exists n : nat, f n = Some x.
 
 Definition LEM := forall X, X \/ ~X.
+Definition wLEM := forall X, ~~X \/ ~X.
 Definition MP := forall P, sdec P -> stable P.
 
-Definition Enum X := Sigma f, forall x : X, exists n : nat, f n = Some x. 
+Definition Enum X := Sigma f, forall x : X, exists n : nat, f n = Some x.
 Definition EQ X := forall x y : X, dec (x = y).
 Definition AP X := forall x y : X, dec (~ x = y).
 
@@ -36,8 +37,7 @@ Inductive Bij (X Y : Type) : Type :=
 Arguments Bijection {X Y}.
 
 
-
-Lemma Skolem {X Y} (R : X -> Y -> Prop) : 
+Lemma Skolem {X Y} (R : X -> Y -> Prop) :
   (forall x, Sigma y, R x y) -> Sigma f, forall x, R x (f x).
 Proof.
   intros H. unshelve eexists; intros x; cbn; now destruct (H x) as [y ].
@@ -55,6 +55,11 @@ Ltac ret := apply ret_.
 Ltac bind H := apply (bind_ H); clear H; intros H; try tauto.
 Ltac lem P := apply (bind_ (lem_ P)); try tauto.
 Ltac dne P := apply (bind_ (dne_ P)); try tauto.
-(* tactic [remove] which removes all of the double negations from statements
-  in the context, whenver the goal is negative. *)
+Ltac remove_dn :=
+  repeat match goal with
+  | H : ~ ~ _ |- False
+    => apply H; clear H; intros H
+  | H : ~ ~ _ |- _ -> False
+    => intros G; apply H; clear H; intros H; revert G
+  end.
 End DN.
